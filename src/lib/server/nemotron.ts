@@ -88,13 +88,14 @@ type ChunkOutcome = {
 const TRACE_TEXT_LIMIT = 4000;
 
 function clip(text: string, limit = TRACE_TEXT_LIMIT): string {
-  return text.length > limit ? `${text.slice(0, limit)}\n… (${text.length - limit} more chars)` : text;
+  return text.length > limit
+    ? `${text.slice(0, limit)}\n… (${text.length - limit} more chars)`
+    : text;
 }
 
-function traceBase(chunk: CourseContentChunk): Omit<
-  ChunkTrace,
-  "status" | "latencyMs" | "modelReply" | "categories"
-> {
+function traceBase(
+  chunk: CourseContentChunk,
+): Omit<ChunkTrace, "status" | "latencyMs" | "modelReply" | "categories"> {
   return {
     chunkId: chunk.id,
     chapterIndex: chunk.chapterIndex,

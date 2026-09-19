@@ -72,8 +72,8 @@ function ImportDebugPage() {
               aside={`${run.chapters} sections · ${run.chunks} passages`}
             />
             <p className="text-sm text-foreground/60">
-              Parser reads the file and produces passages. The model only interprets those
-              passages — it never touches the file itself.
+              Parser reads the file and produces passages. The model only interprets those passages
+              — it never touches the file itself.
             </p>
             {runs.length > 1 ? (
               <div className="mt-3 flex flex-wrap gap-2">

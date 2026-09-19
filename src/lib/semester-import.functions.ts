@@ -482,7 +482,6 @@ export const saveCourseImport = createServerFn({ method: "POST" })
           sourceText: candidate.item.source.sourceText,
         });
 
-
         if (decision.kind === "insert") {
           const review = reviewFor(candidate.item, candidate.ambiguous);
           if (review.review_status === "needs_attention") needsAttention += 1;
