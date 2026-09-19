@@ -64,7 +64,15 @@ export const getPlannerData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PlannerData> => {
     const { supabase, userId } = context;
 
-    const [courses, assignments, exams, events, attention] = await Promise.all([
+    const attentionCountFor = (table: "assignments" | "exams" | "calendar_events") =>
+      supabase
+        .from(table)
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("review_status", "needs_attention");
+
+    const [courses, assignments, exams, events, attentionA, attentionE, attentionC] =
+      await Promise.all([
       supabase
         .from("courses")
         .select("id, name, course_code, instructor")
@@ -92,11 +100,9 @@ export const getPlannerData = createServerFn({ method: "GET" })
         )
         .eq("user_id", userId)
         .eq("review_status", "approved"),
-      supabase
-        .from("assignments")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("review_status", "needs_attention"),
+      attentionCountFor("assignments"),
+      attentionCountFor("exams"),
+      attentionCountFor("calendar_events"),
     ]);
 
     type Joined = {
@@ -174,6 +180,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         instructor: row.instructor,
       })),
       items,
-      attentionCount: attention.count ?? 0,
+      attentionCount:
+        (attentionA.count ?? 0) + (attentionE.count ?? 0) + (attentionC.count ?? 0),
     };
   });
