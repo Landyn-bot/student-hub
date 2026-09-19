@@ -66,14 +66,17 @@ function OnboardingPage() {
   const queryClient = useQueryClient();
   const fetchOnboarding = useServerFn(getOnboardingState);
   const saveOnboarding = useServerFn(completeOnboarding);
+  // Today's date decides the semester we suggest, so students only confirm it.
+  const [suggested] = useState(() => guessCurrentSemester());
   const [step, setStep] = useState(0);
   const [school, setSchool] = useState("");
-  const [termName, setTermName] = useState("");
-  const [startsOn, setStartsOn] = useState("");
-  const [endsOn, setEndsOn] = useState("");
+  const [termName, setTermName] = useState(suggested.name);
+  const [startsOn, setStartsOn] = useState(suggested.startsOn);
+  const [endsOn, setEndsOn] = useState(suggested.endsOn);
   const [weekStartsOn, setWeekStartsOn] = useState(1);
   const [reminderHours, setReminderHours] = useState<0 | 12 | 24 | 48 | 72>(24);
   const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
+  const [emailReminders, setEmailReminders] = useState(true);
 
   const { data } = useQuery({
     queryKey: ["onboarding"],
