@@ -296,7 +296,7 @@ function AgendaView({
                     onClick={() => onOpen(item)}
                     className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
                   >
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
                       </span>
