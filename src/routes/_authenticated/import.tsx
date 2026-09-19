@@ -322,9 +322,17 @@ function ImportSemesterPage() {
         }
       />
 
-      <div className="grid gap-4">
+      <div className="grid gap-5">
         <Panel>
           <PanelHeader title="Course files" aside="One file per course" />
+          <ol className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/50">
+            {["Upload", "Processing", "Organized", "Done"].map((step, index) => (
+              <li key={step} className="flex items-center gap-2">
+                {index > 0 ? <span aria-hidden>→</span> : null}
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
           <div
             onDragOver={(event) => {
               event.preventDefault();
@@ -332,17 +340,23 @@ function ImportSemesterPage() {
             }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
-            className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+            className={`rounded-2xl border-2 border-dashed p-6 text-center transition-colors sm:p-8 ${
               dragging ? "border-brand bg-brand/5" : "border-border"
             }`}
           >
-            <p className="font-display text-lg text-foreground">Drop your course exports here</p>
-            <p className="mt-1 text-sm text-foreground/55">
+            <p className="font-display text-base text-foreground sm:text-lg">
+              Drop your course exports here
+            </p>
+            <p className="mx-auto mt-1 max-w-[46ch] text-pretty text-sm text-foreground/55">
               Everything after that is automatic: each file is read, understood and added to your
               semester.
             </p>
             <div className="mt-4">
-              <Button variant="brand" onClick={() => fileInputRef.current?.click()}>
+              <Button
+                variant="brand"
+                className="w-full sm:w-auto"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 Choose files
               </Button>
             </div>
