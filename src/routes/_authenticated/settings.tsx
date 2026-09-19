@@ -127,32 +127,73 @@ function SettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm text-foreground/70">
               Semester name
-              <input className={fieldClass} required maxLength={100} value={termName} onChange={(event) => setTermName(event.target.value)} />
+              <input
+                className={fieldClass}
+                required
+                maxLength={100}
+                value={termName}
+                onChange={(event) => setTermName(event.target.value)}
+              />
             </label>
             <label className="block text-sm text-foreground/70">
               Week starts on
-              <select className={fieldClass} value={weekStartsOn} onChange={(event) => setWeekStartsOn(Number(event.target.value))}>
-                <option value={0}>Sunday</option><option value={1}>Monday</option><option value={6}>Saturday</option>
+              <select
+                className={fieldClass}
+                value={weekStartsOn}
+                onChange={(event) => setWeekStartsOn(Number(event.target.value))}
+              >
+                <option value={0}>Sunday</option>
+                <option value={1}>Monday</option>
+                <option value={6}>Saturday</option>
               </select>
             </label>
             <label className="block text-sm text-foreground/70">
               Semester starts
-              <input className={fieldClass} type="date" required value={startsOn} onChange={(event) => setStartsOn(event.target.value)} />
+              <input
+                className={fieldClass}
+                type="date"
+                required
+                value={startsOn}
+                onChange={(event) => setStartsOn(event.target.value)}
+              />
             </label>
             <label className="block text-sm text-foreground/70">
               Semester ends
-              <input className={fieldClass} type="date" required min={startsOn} value={endsOn} onChange={(event) => setEndsOn(event.target.value)} />
+              <input
+                className={fieldClass}
+                type="date"
+                required
+                min={startsOn}
+                value={endsOn}
+                onChange={(event) => setEndsOn(event.target.value)}
+              />
             </label>
             <label className="block text-sm text-foreground/70">
               Planning style
-              <select className={fieldClass} value={planningStyle} onChange={(event) => setPlanningStyle(event.target.value as PlanningStyle)}>
-                <option value="early">Work ahead</option><option value="balanced">Balanced</option><option value="deadline">Deadline focused</option>
+              <select
+                className={fieldClass}
+                value={planningStyle}
+                onChange={(event) => setPlanningStyle(event.target.value as PlanningStyle)}
+              >
+                <option value="early">Work ahead</option>
+                <option value="balanced">Balanced</option>
+                <option value="deadline">Deadline focused</option>
               </select>
             </label>
             <label className="block text-sm text-foreground/70">
               Default reminder
-              <select className={fieldClass} value={reminderHours} onChange={(event) => setReminderHours(Number(event.target.value) as 0 | 12 | 24 | 48 | 72)}>
-                <option value={0}>No reminder</option><option value={12}>12 hours before</option><option value={24}>1 day before</option><option value={48}>2 days before</option><option value={72}>3 days before</option>
+              <select
+                className={fieldClass}
+                value={reminderHours}
+                onChange={(event) =>
+                  setReminderHours(Number(event.target.value) as 0 | 12 | 24 | 48 | 72)
+                }
+              >
+                <option value={0}>No reminder</option>
+                <option value={12}>12 hours before</option>
+                <option value={24}>1 day before</option>
+                <option value={48}>2 days before</option>
+                <option value={72}>3 days before</option>
               </select>
             </label>
           </div>

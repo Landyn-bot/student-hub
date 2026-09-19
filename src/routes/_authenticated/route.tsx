@@ -64,5 +64,9 @@ function AuthenticatedLayout() {
   if (onboarding.data?.completed && isOnboarding) return null;
   if (isOnboarding) return <Outlet />;
 
-  return <AppShell displayName={displayName}><Outlet /></AppShell>;
+  return (
+    <AppShell displayName={displayName}>
+      <Outlet />
+    </AppShell>
+  );
 }

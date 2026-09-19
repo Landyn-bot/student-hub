@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, GraduationCap, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  GraduationCap,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -318,7 +325,11 @@ function OnboardingPage() {
                   : step === steps.length - 1
                     ? "Enter Syllo"
                     : "Continue"}
-                {step === steps.length - 1 ? <Check className="size-4" /> : <ArrowRight className="size-4" />}
+                {step === steps.length - 1 ? (
+                  <Check className="size-4" />
+                ) : (
+                  <ArrowRight className="size-4" />
+                )}
               </Button>
             </div>
           </section>
