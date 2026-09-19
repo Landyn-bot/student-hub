@@ -72,7 +72,10 @@ function NemotronTestPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel>
           <PanelHeader title="Input" aside="Manual text" />
-          <label className="mb-1 block text-xs font-medium text-foreground/55" htmlFor="source-name">
+          <label
+            className="mb-1 block text-xs font-medium text-foreground/55"
+            htmlFor="source-name"
+          >
             Source name
           </label>
           <input
