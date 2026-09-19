@@ -8,8 +8,20 @@ import { Button } from "@/components/ui/app-button";
 import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
+import { getFocusPlan, type FocusItem } from "@/lib/focus.functions";
 import { getOnboardingState } from "@/lib/onboarding.functions";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
+
+/** "Due tomorrow", "Due Friday", "2 days past due" — never invented, always from the stored date. */
+function dueLabel(item: FocusItem): string {
+  if (item.overdue) {
+    const days = Math.abs(item.daysUntil);
+    return `${days} day${days === 1 ? "" : "s"} past due`;
+  }
+  if (item.daysUntil === 0) return "Due today";
+  if (item.daysUntil === 1) return "Due tomorrow";
+  return `Due ${formatDay(item.date)}`;
+}
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -49,6 +61,7 @@ function addDays(key: string, days: number): string {
 function DashboardPage() {
   const fetchOnboarding = useServerFn(getOnboardingState);
   const fetchPlanner = useServerFn(getPlannerData);
+  const fetchFocus = useServerFn(getFocusPlan);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
 
   const { data: onboarding } = useQuery({
@@ -61,6 +74,12 @@ function DashboardPage() {
   const { data: planner, isPending } = useQuery({
     queryKey: ["planner"],
     queryFn: () => fetchPlanner(),
+  });
+
+  // Short ranked focus list; ranking is deterministic, wording comes from the model.
+  const { data: focus, isPending: focusPending } = useQuery({
+    queryKey: ["focus"],
+    queryFn: () => fetchFocus(),
   });
 
   const groups = useMemo(() => {
@@ -123,6 +142,50 @@ function DashboardPage() {
           </div>
         </Panel>
       )}
+
+      <Panel className="mb-5">
+        <PanelHeader title="What should I work on?" aside="Ranked from your own deadlines" />
+        {focusPending ? (
+          <p className="text-sm text-foreground/50">Working out your priorities…</p>
+        ) : (focus?.items.length ?? 0) === 0 ? (
+          <EmptyState
+            title="Nothing to prioritise yet"
+            description={
+              courses.length === 0
+                ? "Upload your courses and Syllo will point you at the work that matters first."
+                : "No dated work in the next couple of weeks."
+            }
+          />
+        ) : (
+          <ul className="space-y-2">
+            {focus?.items.map((item) => {
+              const match = planner?.items.find((entry) => entry.id === item.id) ?? null;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => match && setSelected(match)}
+                    className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-foreground">
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-foreground/55">
+                        {[item.courseName ?? "No course", dueLabel(item)].join(" · ")}
+                      </span>
+                      <span className="mt-1 block text-xs text-foreground/60">{item.reason}</span>
+                    </span>
+                    {item.overdue ? (
+                      <span className="shrink-0 text-xs text-accent">Overdue</span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel>

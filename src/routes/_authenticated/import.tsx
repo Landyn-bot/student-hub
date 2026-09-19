@@ -243,6 +243,7 @@ function ImportSemesterPage() {
         void queryClient.invalidateQueries({ queryKey: ["attention-items"] });
         void queryClient.invalidateQueries({ queryKey: ["courses"] });
         void queryClient.invalidateQueries({ queryKey: ["planner"] });
+        void queryClient.invalidateQueries({ queryKey: ["focus"] });
       } catch (error) {
         console.error("[import] saving failed", error);
         patch(entry.importId, {
@@ -530,6 +531,7 @@ function AttentionPanel() {
   const refresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["attention-items"] });
     await queryClient.invalidateQueries({ queryKey: ["planner"] });
+    await queryClient.invalidateQueries({ queryKey: ["focus"] });
   }, [queryClient]);
 
   async function runBulk(scope: "high_confidence_assignments" | "reviewed_items") {
