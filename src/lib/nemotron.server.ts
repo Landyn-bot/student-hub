@@ -79,7 +79,11 @@ function classifyStatus(status: number): NemotronFailureKind {
 }
 
 /** Failures worth one more try: the service was momentarily busy or unreachable. */
-const RETRYABLE: ReadonlySet<NemotronFailureKind> = new Set(["rate_limited", "network", "upstream"]);
+const RETRYABLE: ReadonlySet<NemotronFailureKind> = new Set([
+  "rate_limited",
+  "network",
+  "upstream",
+]);
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1_500;
 
@@ -97,7 +101,8 @@ export async function runNemotron(request: NemotronRequest): Promise<NemotronRes
     } catch (error) {
       if (!(error instanceof NemotronError)) throw error;
       const retryable =
-        RETRYABLE.has(error.kind) && (error.status === undefined || error.status >= 500 || error.status === 429);
+        RETRYABLE.has(error.kind) &&
+        (error.status === undefined || error.status >= 500 || error.status === 429);
       lastError = error;
       if (!retryable || attempt === MAX_ATTEMPTS) throw error;
       console.warn(`[nemotron] retrying after ${error.kind} (attempt ${attempt})`);
