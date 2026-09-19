@@ -1,33 +1,45 @@
-# Syllo
+# College Survival Dashboard
 
-Syllo is a personal college operating system that brings courses, assignments, calendars, finances, and study tools into one focused workspace.
+College Survival Dashboard is a hackathon MVP for turning authorized Canvas course EPUB exports into an evidence-backed semester view. The planned experience combines courses, assignments, assessments, due dates, policies, office hours, source evidence, and an Ask My Semester assistant that answers only from imported course material.
 
-Authentication, data, and file storage are powered by Lovable Cloud.
+## Documentation
 
-Built for SteelHacks XIII 2026 with [Lovable](https://lovable.dev).
+The active project documentation is in [`docs/`](docs/). [`docs/ROADMAP.md`](docs/ROADMAP.md) is the single authoritative implementation roadmap.
 
-## Continue building with Lovable
+- [Business requirements](docs/BRD.md)
+- [Product requirements](docs/PRD.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [API contract](docs/API.md)
+- [Data model](docs/DATA-MODEL.md)
+- [EPUB pipeline](docs/EPUB-PIPELINE.md)
+- [AI pipeline](docs/AI-PIPELINE.md)
+- [Security requirements](docs/SECURITY.md)
+- [Demo runbook](docs/DEMO.md)
+- [Pitch notes](docs/PITCH.md)
+- [Evaluation](docs/SCORING.md)
+- [Sources and decisions](docs/SOURCES.md)
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+## Current Repository State
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+The repository currently contains a Lovable-generated React and TypeScript frontend using TanStack Start/Vite tooling, existing Supabase integrations, and PostgreSQL-oriented Drizzle configuration. These technologies have not been removed or migrated by the documentation setup.
+
+## Approved Hackathon Target
+
+The approved MVP target preserves the existing frontend where practical and adds a Python FastAPI backend, SQLite through SQLAlchemy, Pydantic validation, deterministic EPUB parsing, and server-side NVIDIA Nemotron processing. The frontend will communicate with that backend through a documented API. The FastAPI backend is a target architecture, not a claim that it already exists.
+
+Azure, PostgreSQL migration, Docker, Kubernetes, Redis, Celery, microservices, vector databases, Supabase migration, live Canvas API integration, banking integrations, and production financial advice are outside the active MVP.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+The current frontend can be run with Node.js and npm:
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
 
-## Built with
+Backend setup is intentionally deferred to the implementation phases in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+## Legacy Notes
+
+Useful planning notes from the former root roadmap are preserved in [docs/LEGACY-FRONTEND-NOTES.md](docs/LEGACY-FRONTEND-NOTES.md). That file is informational and is not authoritative for the MVP architecture.
