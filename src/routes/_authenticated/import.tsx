@@ -527,6 +527,27 @@ function AttentionPanel() {
     );
   }
 
+  // Normal extracted data never asks for approval. Only unresolved conflicts surface here, and
+  // they stay folded away behind a single line until the student opens them.
+  if (!open) {
+    return (
+      <Panel>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full text-left font-display text-base text-foreground underline-offset-4 hover:underline"
+        >
+          {items.length} item{items.length === 1 ? "" : "s"} need your attention
+        </button>
+        <p className="mt-1 text-sm text-foreground/60">
+          Everything else was added to your planner automatically.
+        </p>
+      </Panel>
+    );
+  }
+
+
+
   return (
     <Panel>
       <PanelHeader
