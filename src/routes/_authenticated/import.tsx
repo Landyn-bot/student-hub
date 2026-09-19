@@ -547,8 +547,6 @@ function AttentionPanel() {
     );
   }
 
-
-
   return (
     <Panel>
       <PanelHeader
