@@ -12,13 +12,7 @@ function initials(name: string) {
   return name.trim().charAt(0).toUpperCase() || "S";
 }
 
-export function AppShell({
-  children,
-  displayName,
-}: {
-  children: ReactNode;
-  displayName: string;
-}) {
+export function AppShell({ children, displayName }: { children: ReactNode; displayName: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -49,9 +43,7 @@ export function AppShell({
             <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
               S
             </span>
-            <span className="font-display text-lg font-semibold tracking-tight">
-              Syllo
-            </span>
+            <span className="font-display text-lg font-semibold tracking-tight">Syllo</span>
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
@@ -64,9 +56,7 @@ export function AppShell({
               <span className="grid size-7 place-items-center rounded-[10px] bg-accent/90 text-xs font-semibold text-accent-foreground">
                 {initials(displayName)}
               </span>
-              <span className="hidden text-sm font-medium sm:inline">
-                {displayName}
-              </span>
+              <span className="hidden text-sm font-medium sm:inline">{displayName}</span>
               <span className="text-xs text-foreground/40">Sign out</span>
             </Button>
           </div>
@@ -86,10 +76,7 @@ export function AppShell({
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setMobileOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-64 bg-card p-5 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <span className="font-display text-lg font-semibold">Syllo</span>

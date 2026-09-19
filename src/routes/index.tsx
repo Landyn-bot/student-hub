@@ -32,9 +32,7 @@ function Landing() {
           <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
             S
           </span>
-          <span className="font-display text-lg font-semibold tracking-tight">
-            Syllo
-          </span>
+          <span className="font-display text-lg font-semibold tracking-tight">Syllo</span>
         </div>
         <div className="ml-auto">
           <Button variant="soft" size="sm" asChild>
@@ -44,16 +42,14 @@ function Landing() {
       </header>
 
       <main className="mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-8">
-        <p className="mb-2 text-sm text-foreground/50">
-          A personal college operating system
-        </p>
+        <p className="mb-2 text-sm text-foreground/50">A personal college operating system</p>
         <h1 className="max-w-[22ch] text-balance font-display text-4xl font-semibold leading-tight sm:text-5xl">
           Your semester, kept in one glance.
         </h1>
         <p className="mt-4 max-w-[52ch] text-pretty text-base leading-relaxed text-foreground/60">
-          Courses, assignments, your calendar and your money — gathered into one
-          quiet planner instead of five tabs. Nothing is invented for you: it
-          fills as you bring your own semester in.
+          Courses, assignments, your calendar and your money — gathered into one quiet planner
+          instead of five tabs. Nothing is invented for you: it fills as you bring your own semester
+          in.
         </p>
         <div className="mt-7">
           <Button variant="accent" size="lg" asChild>

@@ -9,10 +9,8 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        brand:
-          "bg-primary text-primary-foreground ring-1 ring-primary/40 hover:-translate-y-px",
-        accent:
-          "bg-accent text-accent-foreground ring-1 ring-accent/40 hover:-translate-y-px",
+        brand: "bg-primary text-primary-foreground ring-1 ring-primary/40 hover:-translate-y-px",
+        accent: "bg-accent text-accent-foreground ring-1 ring-accent/40 hover:-translate-y-px",
         soft: "bg-card text-foreground ring-1 ring-black/5 hover:-translate-y-px",
         outline: "border border-border text-foreground hover:bg-black/[0.03]",
         ghost: "text-foreground/70 hover:bg-black/5",
@@ -29,8 +27,7 @@ export const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
@@ -38,11 +35,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        {...props}
-      />
+      <Comp ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
     );
   },
 );

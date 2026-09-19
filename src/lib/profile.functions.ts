@@ -34,17 +34,15 @@ export const updateProfile = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => profileInput.parse(data))
   .handler(async ({ data, context }) => {
     // The authenticated account ID is always the profile owner.
-    const { error } = await context.supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: context.userId,
-          full_name: data.full_name,
-          school: data.school,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" },
-      );
+    const { error } = await context.supabase.from("profiles").upsert(
+      {
+        id: context.userId,
+        full_name: data.full_name,
+        school: data.school,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
 
     if (error) {
       throw error;

@@ -135,11 +135,7 @@ function RootComponent() {
   useEffect(() => {
     // Refresh protected route data whenever the Lovable Cloud session changes.
     const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (
-        event !== "SIGNED_IN" &&
-        event !== "SIGNED_OUT" &&
-        event !== "USER_UPDATED"
-      ) {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") {
         return;
       }
       router.invalidate();

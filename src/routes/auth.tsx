@@ -13,8 +13,7 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — Syllo" },
       {
         name: "description",
-        content:
-          "Sign in to Syllo, the calm planner for your whole semester.",
+        content: "Sign in to Syllo, the calm planner for your whole semester.",
       },
       { property: "og:title", content: "Sign in — Syllo" },
       {
@@ -71,9 +70,7 @@ function AuthPage() {
       }
       navigate({ to: "/dashboard", replace: true });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Something went wrong",
-      );
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -100,9 +97,7 @@ function AuthPage() {
           <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
             S
           </span>
-          <span className="font-display text-lg font-semibold tracking-tight">
-            Syllo
-          </span>
+          <span className="font-display text-lg font-semibold tracking-tight">Syllo</span>
         </Link>
       </header>
 
@@ -147,26 +142,14 @@ function AuthPage() {
                 type="password"
                 required
                 minLength={8}
-                autoComplete={
-                  mode === "signin" ? "current-password" : "new-password"
-                }
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
             </label>
 
-            <Button
-              type="submit"
-              variant="brand"
-              size="lg"
-              className="w-full"
-              disabled={busy}
-            >
-              {busy
-                ? "One moment…"
-                : mode === "signin"
-                  ? "Sign in"
-                  : "Create account"}
+            <Button type="submit" variant="brand" size="lg" className="w-full" disabled={busy}>
+              {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
             </Button>
           </form>
 
@@ -176,12 +159,7 @@ function AuthPage() {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={handleGoogle}
-          >
+          <Button variant="outline" size="lg" className="w-full" onClick={handleGoogle}>
             Continue with Google
           </Button>
 
