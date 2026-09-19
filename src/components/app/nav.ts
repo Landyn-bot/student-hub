@@ -35,9 +35,11 @@ export const navGroups: NavGroup[] = [
     heading: "Tools",
     items: [
       { label: "AI Assistant", to: "/assistant" },
-      // Developer-only sandbox for the Nemotron analysis service.
-      { label: "Nemotron Test", to: "/nemotron-test" },
       { label: "Settings", to: "/settings" },
     ],
   },
 ];
+
+// Developer-only pages stay reachable by URL (/nemotron-test, /epub-test,
+// /import-debug) but are deliberately kept out of the student-facing navigation.
+
