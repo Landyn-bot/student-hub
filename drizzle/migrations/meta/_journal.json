@@ -57,6 +57,13 @@
       "when": 1789857740690,
       "tag": "0007_item_conflicts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789860526041,
+      "tag": "0008_revoke_anon_access",
+      "breakpoints": true
     }
   ]
 }

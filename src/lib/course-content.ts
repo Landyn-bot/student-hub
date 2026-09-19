@@ -134,6 +134,21 @@ const gradingItem = z.object({
   weight: nullableText.optional(),
 });
 
+/**
+ * Models are not always tidy: a category can come back as null, or one item in an
+ * otherwise good list can be malformed. Drop only the entries that fail rather than
+ * discarding the whole excerpt, and treat anything that is not a list as empty.
+ */
+function itemArray<T extends z.ZodTypeAny>(item: T) {
+  return z
+    .preprocess(
+      (value) =>
+        Array.isArray(value) ? value.filter((entry) => item.safeParse(entry).success) : [],
+      z.array(item),
+    )
+    .default([]);
+}
+
 /** What the model is asked to return, before provenance is attached server-side. */
 export const modelExtractionSchema = z.object({
   course: z
@@ -144,21 +159,22 @@ export const modelExtractionSchema = z.object({
       semester: nullableText,
     })
     .partial()
+    .nullish()
     .transform((course) => ({
-      course_code: course.course_code ?? null,
-      course_name: course.course_name ?? null,
-      instructor: course.instructor ?? null,
-      semester: course.semester ?? null,
+      course_code: course?.course_code ?? null,
+      course_name: course?.course_name ?? null,
+      instructor: course?.instructor ?? null,
+      semester: course?.semester ?? null,
     })),
-  assignments: z.array(assignmentItem).default([]),
-  exams: z.array(datedItem).default([]),
-  quizzes: z.array(datedItem).default([]),
-  projects: z.array(datedItem).default([]),
-  readings: z.array(datedItem).default([]),
-  important_dates: z.array(datedItem).default([]),
-  grading: z.array(gradingItem).default([]),
-  policies: z.array(datedItem).default([]),
-  other_important_information: z.array(datedItem).default([]),
+  assignments: itemArray(assignmentItem),
+  exams: itemArray(datedItem),
+  quizzes: itemArray(datedItem),
+  projects: itemArray(datedItem),
+  readings: itemArray(datedItem),
+  important_dates: itemArray(datedItem),
+  grading: itemArray(gradingItem),
+  policies: itemArray(datedItem),
+  other_important_information: itemArray(datedItem),
 });
 
 export type ModelExtraction = z.infer<typeof modelExtractionSchema>;
