@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
-import { extractionListKeys, type CourseExtraction } from "@/lib/course-content";
+import type { CourseExtraction } from "@/lib/course-content";
 import {
   CourseImportError,
   createImportId,
@@ -644,6 +644,3 @@ function AttentionRow({
     </div>
   );
 }
-
-/** Unused list keys are kept referenced so the extraction contract stays in one place. */
-export const importedCategories = extractionListKeys;
