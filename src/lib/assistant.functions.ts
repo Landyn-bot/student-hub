@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
 /**
  * The Syllo assistant: one ongoing conversation per student, grounded in that
@@ -69,8 +72,8 @@ export const getAssistantChat = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
 
     const messages: AssistantMessage[] = (data ?? [])
-      .filter((row: any) => row.role === "user" || row.role === "assistant")
-      .map((row: any) => ({
+      .filter((row) => row.role === "user" || row.role === "assistant")
+      .map((row) => ({
         id: row.id as string,
         role: row.role as "user" | "assistant",
         content: row.content as string,
@@ -90,7 +93,10 @@ function itemLine(parts: Array<string | null | undefined>): string {
  * approved upcoming work, dated events and course policies. Rejected or
  * unresolved imports are excluded, and everything is scoped to the session user.
  */
-async function loadAcademicContext(supabase: any, userId: string): Promise<string> {
+async function loadAcademicContext(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<string> {
   const [courses, assignments, exams, events, policies] = await Promise.all([
     supabase.from("courses").select("name, course_code, instructor").eq("user_id", userId),
     supabase
@@ -125,14 +131,14 @@ async function loadAcademicContext(supabase: any, userId: string): Promise<strin
 
   const sections: string[] = [];
 
-  const courseLines = (courses.data ?? []).map((c: any) =>
+  const courseLines = (courses.data ?? []).map((c) =>
     itemLine([c.name, c.course_code ? `code ${c.course_code}` : null, c.instructor]),
   );
   sections.push(
     courseLines.length > 0 ? `COURSES\n${courseLines.join("\n")}` : "COURSES\n(none imported yet)",
   );
 
-  const assignmentLines = (assignments.data ?? []).map((a: any) =>
+  const assignmentLines = (assignments.data ?? []).map((a) =>
     itemLine([
       "assignment",
       a.title,
@@ -148,7 +154,7 @@ async function loadAcademicContext(supabase: any, userId: string): Promise<strin
       : "ASSIGNMENTS AND OTHER COURSEWORK\n(none imported yet)",
   );
 
-  const examLines = (exams.data ?? []).map((e: any) =>
+  const examLines = (exams.data ?? []).map((e) =>
     itemLine([
       e.exam_type ?? "exam",
       e.title,
@@ -165,7 +171,7 @@ async function loadAcademicContext(supabase: any, userId: string): Promise<strin
       : "EXAMS AND QUIZZES\n(none imported yet)",
   );
 
-  const eventLines = (events.data ?? []).map((e: any) => {
+  const eventLines = (events.data ?? []).map((e) => {
     const starts = e.starts_at ? new Date(e.starts_at) : null;
     return itemLine([
       e.event_type ?? "event",
@@ -179,7 +185,7 @@ async function loadAcademicContext(supabase: any, userId: string): Promise<strin
   });
   if (eventLines.length > 0) sections.push(`IMPORTANT DATES AND EVENTS\n${eventLines.join("\n")}`);
 
-  const policyLines = (policies.data ?? []).map((p: any) =>
+  const policyLines = (policies.data ?? []).map((p) =>
     itemLine([p.policy_type, p.title, p.courses?.name ?? null, p.content]),
   );
   if (policyLines.length > 0) sections.push(`COURSE POLICIES\n${policyLines.join("\n")}`);
