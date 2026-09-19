@@ -8,6 +8,20 @@
       "when": 1789838849197,
       "tag": "0000_create_profiles_and_courses",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789840284010,
+      "tag": "0001_academic_schema_expansion",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789840298349,
+      "tag": "0002_lock_down_definer_functions",
+      "breakpoints": true
     }
   ]
 }

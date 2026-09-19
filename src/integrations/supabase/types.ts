@@ -14,6 +14,432 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignments: {
+        Row: {
+          ai_confidence: number | null
+          ai_generated: boolean
+          completed_at: string | null
+          course_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          id: string
+          points: number | null
+          priority: string
+          source_document_id: string | null
+          source_page: number | null
+          source_text: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_generated?: boolean
+          completed_at?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          points?: number | null
+          priority?: string
+          source_document_id?: string | null
+          source_page?: number | null
+          source_text?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_generated?: boolean
+          completed_at?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          points?: number | null
+          priority?: string
+          source_document_id?: string | null
+          source_page?: number | null
+          source_text?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          currency: string
+          ends_on: string | null
+          id: string
+          name: string
+          period: string
+          starts_on: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          currency?: string
+          ends_on?: string | null
+          id?: string
+          name: string
+          period?: string
+          starts_on?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          currency?: string
+          ends_on?: string | null
+          id?: string
+          name?: string
+          period?: string
+          starts_on?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_events: {
+        Row: {
+          ai_generated: boolean
+          all_day: boolean
+          assignment_id: string | null
+          course_id: string | null
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          event_type: string
+          exam_id: string | null
+          id: string
+          location: string | null
+          recurrence_rule: string | null
+          source_document_id: string | null
+          source_text: string | null
+          starts_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean
+          all_day?: boolean
+          assignment_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          event_type?: string
+          exam_id?: string | null
+          id?: string
+          location?: string | null
+          recurrence_rule?: string | null
+          source_document_id?: string | null
+          source_text?: string | null
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean
+          all_day?: boolean
+          assignment_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          event_type?: string
+          exam_id?: string | null
+          id?: string
+          location?: string | null
+          recurrence_rule?: string | null
+          source_document_id?: string | null
+          source_text?: string | null
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_conversations: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          id: string
+          last_message_at: string | null
+          model: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          model?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          model?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          citations: Json | null
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          model: string | null
+          role: string
+          source_document_id: string | null
+          source_text: string | null
+          token_count: number | null
+          user_id: string
+        }
+        Insert: {
+          citations?: Json | null
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          role: string
+          source_document_id?: string | null
+          source_text?: string | null
+          token_count?: number | null
+          user_id: string
+        }
+        Update: {
+          citations?: Json | null
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          role?: string
+          source_document_id?: string | null
+          source_text?: string | null
+          token_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_documents: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          error_message: string | null
+          file_type: string | null
+          filename: string
+          id: string
+          page_count: number | null
+          processing_status: string
+          raw_text: string | null
+          storage_path: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_type?: string | null
+          filename: string
+          id?: string
+          page_count?: number | null
+          processing_status?: string
+          raw_text?: string | null
+          storage_path?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_type?: string | null
+          filename?: string
+          id?: string
+          page_count?: number | null
+          processing_status?: string
+          raw_text?: string | null
+          storage_path?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_documents_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_policies: {
+        Row: {
+          ai_generated: boolean
+          content: string | null
+          course_id: string | null
+          created_at: string
+          id: string
+          policy_type: string
+          source_document_id: string | null
+          source_page: number | null
+          source_text: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean
+          content?: string | null
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          policy_type?: string
+          source_document_id?: string | null
+          source_page?: number | null
+          source_text?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean
+          content?: string | null
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          policy_type?: string
+          source_document_id?: string | null
+          source_page?: number | null
+          source_text?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_policies_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_policies_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           color: string | null
@@ -67,6 +493,147 @@ export type Database = {
           },
         ]
       }
+      exams: {
+        Row: {
+          ai_generated: boolean
+          course_id: string | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          exam_date: string | null
+          exam_type: string | null
+          id: string
+          location: string | null
+          points: number | null
+          source_document_id: string | null
+          source_text: string | null
+          start_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          ai_generated?: boolean
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          exam_date?: string | null
+          exam_type?: string | null
+          id?: string
+          location?: string | null
+          points?: number | null
+          source_document_id?: string | null
+          source_text?: string | null
+          start_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          ai_generated?: boolean
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          exam_date?: string | null
+          exam_type?: string | null
+          id?: string
+          location?: string | null
+          points?: number | null
+          source_document_id?: string | null
+          source_text?: string | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          budget_id: string | null
+          category: string | null
+          course_id: string | null
+          created_at: string
+          currency: string
+          description: string
+          direction: string
+          id: string
+          merchant: string | null
+          notes: string | null
+          occurred_on: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          budget_id?: string | null
+          category?: string | null
+          course_id?: string | null
+          created_at?: string
+          currency?: string
+          description: string
+          direction?: string
+          id?: string
+          merchant?: string | null
+          notes?: string | null
+          occurred_on?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          budget_id?: string | null
+          category?: string | null
+          course_id?: string | null
+          created_at?: string
+          currency?: string
+          description?: string
+          direction?: string
+          id?: string
+          merchant?: string | null
+          notes?: string | null
+          occurred_on?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -93,6 +660,72 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          ai_generated: boolean
+          assignment_id: string | null
+          completed_at: string | null
+          course_id: string | null
+          created_at: string
+          due_date: string | null
+          due_time: string | null
+          id: string
+          notes: string | null
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean
+          assignment_id?: string | null
+          completed_at?: string | null
+          course_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean
+          assignment_id?: string | null
+          completed_at?: string | null
+          course_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       terms: {
         Row: {
