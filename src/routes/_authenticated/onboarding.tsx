@@ -310,6 +310,23 @@ function OnboardingPage() {
                     </select>
                   </label>
                 </div>
+                <label className="inset-tile flex cursor-pointer items-start gap-3 p-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 size-4 accent-[hsl(var(--primary))]"
+                    checked={emailReminders}
+                    onChange={(event) => setEmailReminders(event.target.checked)}
+                    disabled={reminderHours === 0}
+                  />
+                  <span className="block">
+                    <span className="block text-sm font-semibold">Email me my reminders</span>
+                    <span className="mt-1 block text-xs leading-5 text-foreground/50">
+                      {reminderHours === 0
+                        ? "Turn a reminder time on above to receive emails."
+                        : `Sent to ${data?.reminder_email ?? "your account email"} before each due date.`}
+                    </span>
+                  </span>
+                </label>
               </div>
             ) : null}
 
