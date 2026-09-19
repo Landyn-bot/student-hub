@@ -426,6 +426,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
       let examsSaved = 0;
       let mergedCount = 0;
       let resolvedCount = 0;
+      const decisions: SaveDecision[] = [];
 
       const logConflict = async (entry: {
         kind: Kind;
