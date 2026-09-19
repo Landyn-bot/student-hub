@@ -4,6 +4,7 @@ export type NavItem = {
     | "/dashboard"
     | "/calendar"
     | "/courses"
+    | "/import"
     | "/assignments"
     | "/finances"
     | "/assistant"
@@ -20,6 +21,7 @@ export const navGroups: NavGroup[] = [
       { label: "Dashboard", to: "/dashboard" },
       { label: "Calendar", to: "/calendar" },
       { label: "Courses", to: "/courses" },
+      { label: "Import Semester", to: "/import" },
     ],
   },
   {
