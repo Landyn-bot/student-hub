@@ -1,15 +1,17 @@
 // Import Semester: the production-facing workflow for bringing a semester of Canvas course
-// exports into Syllo. Each .epub is parsed and analysed independently, so one bad file never
-// blocks the rest. Nothing is written to the database here -- the next step is review.
+// exports into Syllo. Each .epub is uploaded, parsed, analysed, organized and saved end to
+// end, without asking the student to approve every extracted item. Only genuinely unresolved
+// items (unreadable dates, low confidence) are surfaced afterwards.
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
-import { extractionListKeys, type CourseExtraction } from "@/lib/course-content";
+import type { CourseExtraction } from "@/lib/course-content";
 import {
   CourseImportError,
   createImportId,
@@ -20,6 +22,13 @@ import {
   type ImportErrorCode,
   type NormalizedCourseImport,
 } from "@/lib/course-import";
+import {
+  bulkApproveItems,
+  listAttentionItems,
+  reviewImportedItem,
+  saveCourseImport,
+  type AttentionItem,
+} from "@/lib/semester-import.functions";
 import { chunkEpub, EpubParseError, parseEpub } from "@/lib/epub";
 
 export const Route = createFileRoute("/_authenticated/import")({
@@ -29,13 +38,13 @@ export const Route = createFileRoute("/_authenticated/import")({
       {
         name: "description",
         content:
-          "Bring a whole semester of Canvas course exports into Syllo and review what was found before anything is saved.",
+          "Drop in a semester of Canvas course exports and Syllo reads, organizes and saves your coursework automatically.",
       },
       { property: "og:title", content: "Import Semester — Syllo" },
       {
         property: "og:description",
         content:
-          "Bring a whole semester of Canvas course exports into Syllo and review what was found before anything is saved.",
+          "Drop in a semester of Canvas course exports and Syllo reads, organizes and saves your coursework automatically.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -48,17 +57,12 @@ export const Route = createFileRoute("/_authenticated/import")({
 /* State                                                               */
 /* ------------------------------------------------------------------ */
 
-/**
- * Parsing and semantic extraction are separate stages: a file is never "imported"
- * just because the parser succeeded.
- */
-type ImportStatus =
-  "selected" | "parsing" | "parsed" | "analyzing" | "ready_for_review" | "completed" | "failed";
+/** Each stage is distinct: a file is only "complete" once its coursework is saved. */
+type ImportStatus = "uploading" | "parsing" | "analyzing" | "organizing" | "complete" | "failed";
 
 type ImportFailure = { code: ImportErrorCode; message: string };
 
 type CourseImport = {
-  /** Namespaces every chunk key, and keys this card in React. */
   importId: string;
   file: File;
   fileName: string;
@@ -66,35 +70,36 @@ type CourseImport = {
   status: ImportStatus;
   normalized: NormalizedCourseImport | null;
   extraction: CourseExtraction | null;
-  chunksAnalyzed: number;
-  chunksFailed: number;
-  analysisMs: number | null;
+  courseName: string | null;
+  itemsSaved: number;
+  examsSaved: number;
+  needsAttention: number;
   error: ImportFailure | null;
 };
 
 const statusLabel: Record<ImportStatus, string> = {
-  selected: "Selected",
-  parsing: "Reading file…",
-  parsed: "Parsed",
-  analyzing: "Finding your coursework…",
-  ready_for_review: "Ready for review",
-  completed: "Reviewed",
+  uploading: "Uploading",
+  parsing: "Parsing",
+  analyzing: "Analyzing",
+  organizing: "Organizing",
+  complete: "Complete",
   failed: "Failed",
 };
 
 const statusTone: Record<ImportStatus, string> = {
-  selected: "border-border text-foreground/60",
+  uploading: "border-border text-foreground/60",
   parsing: "border-border text-foreground/60",
-  parsed: "border-border text-foreground/70",
   analyzing: "border-border text-foreground/70",
-  ready_for_review: "border-brand/40 bg-brand/5 text-foreground",
-  completed: "border-brand/40 bg-brand/5 text-foreground",
+  organizing: "border-border text-foreground/70",
+  complete: "border-brand/40 bg-brand/5 text-foreground",
   failed: "border-destructive/40 bg-destructive/5 text-destructive",
 };
 
 const MAX_CHARS_PER_CHUNK = 12000;
-/** How many files run their model analysis at the same time. */
+/** How many files run through analysis at the same time. */
 const ANALYSIS_CONCURRENCY = 2;
+/** Upper bound on the stored copy of the document text. */
+const MAX_DOCUMENT_CHARS = 400_000;
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -112,8 +117,21 @@ function toFailure(error: unknown): ImportFailure {
   };
 }
 
-function countItems(extraction: CourseExtraction): number {
-  return extractionListKeys.reduce((total, key) => total + extraction[key].length, 0);
+function newEntry(file: File): CourseImport {
+  return {
+    importId: createImportId(),
+    file,
+    fileName: file.name,
+    fileSize: file.size,
+    status: "uploading",
+    normalized: null,
+    extraction: null,
+    courseName: null,
+    itemsSaved: 0,
+    examsSaved: 0,
+    needsAttention: 0,
+    error: null,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -122,9 +140,11 @@ function countItems(extraction: CourseExtraction): number {
 
 function ImportSemesterPage() {
   const analyze = useServerFn(analyzeCourseContentStructured);
+  const save = useServerFn(saveCourseImport);
+  const queryClient = useQueryClient();
+
   const [imports, setImports] = useState<CourseImport[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [showReview, setShowReview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const patch = useCallback((importId: string, next: Partial<CourseImport>) => {
@@ -133,7 +153,7 @@ function ImportSemesterPage() {
     );
   }, []);
 
-  /** Parse one file in the browser, then ask our own endpoint to extract the coursework. */
+  /** Parse in the browser, analyse on our own endpoint, then organize and save. */
   const runImport = useCallback(
     async (entry: CourseImport) => {
       patch(entry.importId, { status: "parsing", error: null });
@@ -143,13 +163,14 @@ function ImportSemesterPage() {
         const parsed = await parseEpub(await entry.file.arrayBuffer());
         const chunks = chunkEpub(parsed, { maxChars: MAX_CHARS_PER_CHUNK });
         normalized = normalizeEpubImport(entry.fileName, parsed, chunks, entry.importId);
-        patch(entry.importId, { status: "parsed", normalized });
+        patch(entry.importId, { normalized });
       } catch (error) {
         patch(entry.importId, { status: "failed", error: toFailure(error) });
         return;
       }
 
       patch(entry.importId, { status: "analyzing" });
+      let extraction: CourseExtraction;
       try {
         const result = await analyze({ data: toAnalysisPayload(normalized) });
         if (!result.ok) {
@@ -159,23 +180,62 @@ function ImportSemesterPage() {
           });
           return;
         }
-        // Extraction succeeded: hold the structured result in state for review.
-        patch(entry.importId, {
-          status: "ready_for_review",
-          extraction: result.extraction,
-          chunksAnalyzed: result.chunksAnalyzed,
-          chunksFailed: result.chunksFailed,
-          analysisMs: result.latencyMs,
-        });
+        extraction = result.extraction;
+        patch(entry.importId, { extraction });
       } catch (error) {
         console.error("[import] analysis request failed", error);
         patch(entry.importId, {
           status: "failed",
           error: { code: "unknown", message: importErrorMessages.unknown },
         });
+        return;
+      }
+
+      // Organizing: group the extracted facts under their course and write them to the
+      // student's own semester data. Provenance travels with every row.
+      patch(entry.importId, { status: "organizing" });
+      try {
+        const documentText = normalized.chunks
+          .map((chunk) => chunk.text)
+          .join("\n\n")
+          .slice(0, MAX_DOCUMENT_CHARS);
+
+        const saved = await save({
+          data: {
+            importId: entry.importId,
+            sourceName: entry.fileName,
+            documentText,
+            documentTitle: normalized.metadata.title,
+            extraction,
+          },
+        });
+
+        if (!saved.ok) {
+          patch(entry.importId, {
+            status: "failed",
+            error: { code: "unknown", message: saved.error },
+          });
+          return;
+        }
+
+        patch(entry.importId, {
+          status: "complete",
+          courseName: saved.courseName,
+          itemsSaved: saved.itemsSaved,
+          examsSaved: saved.examsSaved,
+          needsAttention: saved.needsAttention,
+        });
+        void queryClient.invalidateQueries({ queryKey: ["attention-items"] });
+        void queryClient.invalidateQueries({ queryKey: ["courses"] });
+      } catch (error) {
+        console.error("[import] saving failed", error);
+        patch(entry.importId, {
+          status: "failed",
+          error: { code: "unknown", message: importErrorMessages.unknown },
+        });
       }
     },
-    [analyze, patch],
+    [analyze, patch, queryClient, save],
   );
 
   /** Run a set of files with bounded concurrency; each one succeeds or fails on its own. */
@@ -201,21 +261,7 @@ function ImportSemesterPage() {
       );
       if (files.length === 0) return;
 
-      const entries: CourseImport[] = files.map((file) => ({
-        importId: createImportId(),
-        file,
-        fileName: file.name,
-        fileSize: file.size,
-        status: "selected",
-        normalized: null,
-        extraction: null,
-        chunksAnalyzed: 0,
-        chunksFailed: 0,
-        analysisMs: null,
-        error: null,
-      }));
-
-      setShowReview(false);
+      const entries = files.map(newEntry);
       setImports((prev) => [...prev, ...entries]);
       void runAll(entries);
     },
@@ -230,28 +276,20 @@ function ImportSemesterPage() {
 
   const summary = useMemo(() => {
     const by = (status: ImportStatus) => imports.filter((item) => item.status === status).length;
+    const complete = imports.filter((item) => item.status === "complete");
     return {
       total: imports.length,
-      working: by("selected") + by("parsing") + by("parsed"),
+      working: by("uploading") + by("parsing"),
       analyzing: by("analyzing"),
-      ready: by("ready_for_review"),
-      completed: by("completed"),
+      organizing: by("organizing"),
+      complete: complete.length,
       failed: by("failed"),
+      items: complete.reduce((sum, item) => sum + item.itemsSaved, 0),
+      exams: complete.reduce((sum, item) => sum + item.examsSaved, 0),
     };
   }, [imports]);
 
-  const reviewable = imports.filter(
-    (item) => item.status === "ready_for_review" || item.status === "completed",
-  );
-
-  function onReview() {
-    setImports((prev) =>
-      prev.map((item) =>
-        item.status === "ready_for_review" ? { ...item, status: "completed" } : item,
-      ),
-    );
-    setShowReview(true);
-  }
+  const working = summary.working + summary.analyzing + summary.organizing > 0;
 
   return (
     <>
@@ -259,12 +297,8 @@ function ImportSemesterPage() {
         eyebrow="Import"
         title="Bring in your semester."
         action={
-          <Button
-            variant="brand"
-            onClick={onReview}
-            disabled={summary.ready === 0 && reviewable.length === 0}
-          >
-            Review Imported Courses
+          <Button variant="brand" onClick={() => fileInputRef.current?.click()}>
+            Choose files
           </Button>
         }
       />
@@ -285,7 +319,8 @@ function ImportSemesterPage() {
           >
             <p className="font-display text-lg text-foreground">Drop your course exports here</p>
             <p className="mt-1 text-sm text-foreground/55">
-              Select as many .epub course files as you like — each one is handled separately.
+              Everything after that is automatic: each file is read, understood and added to your
+              semester.
             </p>
             <div className="mt-4">
               <Button variant="brand" onClick={() => fileInputRef.current?.click()}>
@@ -312,7 +347,9 @@ function ImportSemesterPage() {
           <ImportCard key={item.importId} item={item} onRetry={() => void runImport(item)} />
         ))}
 
-        {showReview && reviewable.length > 0 ? <ReviewPanel items={reviewable} /> : null}
+        {summary.complete > 0 && !working ? <FinishedSummary summary={summary} /> : null}
+
+        {summary.complete > 0 ? <AttentionPanel /> : null}
       </div>
     </>
   );
@@ -326,21 +363,23 @@ type Summary = {
   total: number;
   working: number;
   analyzing: number;
-  ready: number;
-  completed: number;
+  organizing: number;
+  complete: number;
   failed: number;
+  items: number;
+  exams: number;
 };
 
 function ProgressSummary({ summary }: { summary: Summary }) {
-  const done = summary.ready + summary.completed + summary.failed;
+  const done = summary.complete + summary.failed;
   const percent = summary.total === 0 ? 0 : Math.round((done / summary.total) * 100);
 
   const lines = [
     `${summary.total} course${summary.total === 1 ? "" : "s"} selected`,
     summary.working > 0 ? `${summary.working} reading` : null,
     summary.analyzing > 0 ? `${summary.analyzing} analyzing` : null,
-    summary.ready > 0 ? `${summary.ready} ready for review` : null,
-    summary.completed > 0 ? `${summary.completed} reviewed` : null,
+    summary.organizing > 0 ? `${summary.organizing} organizing` : null,
+    summary.complete > 0 ? `${summary.complete} complete` : null,
     summary.failed > 0 ? `${summary.failed} failed` : null,
   ].filter((line): line is string => line !== null);
 
@@ -357,8 +396,41 @@ function ProgressSummary({ summary }: { summary: Summary }) {
   );
 }
 
+/** The plain-language result once every file has finished. */
+function FinishedSummary({ summary }: { summary: Summary }) {
+  const { data: attention = [] } = useQuery({
+    queryKey: ["attention-items"],
+    queryFn: () => listAttentionItems(),
+  });
+
+  const lines = [
+    `${summary.complete} course${summary.complete === 1 ? "" : "s"} imported`,
+    `${summary.items} academic item${summary.items === 1 ? "" : "s"} found`,
+    `${summary.exams} exam${summary.exams === 1 ? "" : "s"} found`,
+    `${attention.length} item${attention.length === 1 ? "" : "s"} need attention`,
+  ];
+
+  return (
+    <Panel>
+      <PanelHeader title="Import finished" aside="Saved to your semester" />
+      <ul className="space-y-1 text-sm text-foreground">
+        {lines.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+      {summary.failed > 0 ? (
+        <p className="mt-3 text-sm text-foreground/60">
+          {summary.failed} file{summary.failed === 1 ? "" : "s"} could not be read — use “Try this
+          file again” above.
+        </p>
+      ) : null}
+    </Panel>
+  );
+}
+
 function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void }) {
-  const busy = item.status === "parsing" || item.status === "analyzing";
+  const busy =
+    item.status === "parsing" || item.status === "analyzing" || item.status === "organizing";
   const normalized = item.normalized;
 
   return (
@@ -378,18 +450,15 @@ function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void
       {normalized ? (
         <div className="mt-4 space-y-1 text-sm">
           <p className="font-display text-base text-foreground">
-            {normalized.metadata.title ?? "Course title not stated in the file"}
+            {item.courseName ?? normalized.metadata.title ?? "Course title not stated in the file"}
           </p>
           <p className="text-foreground/60">
             {normalized.chapters.length} sections · {normalized.chunks.length} passages
-            {item.extraction ? ` · ${countItems(item.extraction)} items found` : ""}
-            {item.analysisMs !== null ? ` · ${(item.analysisMs / 1000).toFixed(1)}s` : ""}
+            {item.status === "complete" ? ` · ${item.itemsSaved} items saved` : ""}
+            {item.status === "complete" && item.needsAttention > 0
+              ? ` · ${item.needsAttention} need attention`
+              : ""}
           </p>
-          {item.chunksFailed > 0 ? (
-            <p className="text-xs text-foreground/50">
-              {item.chunksAnalyzed} of {item.chunksAnalyzed + item.chunksFailed} passages analysed
-            </p>
-          ) : null}
           {normalized.warnings.map((warning) => (
             <p key={warning} className="text-xs text-foreground/50">
               ⚠ {warning}
@@ -416,69 +485,169 @@ function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void
   );
 }
 
-/** Review step: what was found, with the exact source sentence behind each item. */
-function ReviewPanel({ items }: { items: CourseImport[] }) {
+/* ------------------------------------------------------------------ */
+/* Items that still need the student                                   */
+/* ------------------------------------------------------------------ */
+
+function AttentionPanel() {
+  const queryClient = useQueryClient();
+  const review = useServerFn(reviewImportedItem);
+  const bulk = useServerFn(bulkApproveItems);
+  const [pending, setPending] = useState(false);
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["attention-items"],
+    queryFn: () => listAttentionItems(),
+  });
+
+  const refresh = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["attention-items"] }),
+    [queryClient],
+  );
+
+  async function runBulk(scope: "high_confidence_assignments" | "reviewed_items") {
+    setPending(true);
+    try {
+      await bulk({ data: { scope } });
+      await refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (isLoading) return null;
+  if (items.length === 0) {
+    return (
+      <Panel>
+        <PanelHeader title="Needs attention" aside="Nothing outstanding" />
+        <p className="text-sm text-foreground/60">
+          Everything we read was clear enough to add to your planner.
+        </p>
+      </Panel>
+    );
+  }
+
   return (
     <Panel>
-      <PanelHeader title="Review what we found" aside="Nothing saved yet" />
+      <PanelHeader
+        title="Needs attention"
+        aside={`${items.length} item${items.length === 1 ? "" : "s"}`}
+      />
       <p className="mb-4 text-sm text-foreground/60">
-        Check each item against the sentence it came from. Anything not stated in your files is left
-        blank rather than guessed.
+        These are the only items we could not settle on our own. Everything else is already in your
+        planner.
       </p>
 
-      <div className="space-y-6">
-        {items.map((item) => {
-          const extraction = item.extraction;
-          if (!extraction) return null;
-          return (
-            <div key={item.importId} className="rounded-2xl border border-border p-4">
-              <p className="font-display text-base text-foreground">
-                {extraction.course.course_name ?? item.normalized?.metadata.title ?? item.fileName}
-              </p>
-              <p className="text-xs text-foreground/50">
-                {extraction.course.course_code ?? "no course code"} ·{" "}
-                {extraction.course.instructor ?? "no instructor"} ·{" "}
-                {extraction.course.semester ?? "no semester"}
-              </p>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Button onClick={() => void runBulk("high_confidence_assignments")} disabled={pending}>
+          Approve all high-confidence assignments
+        </Button>
+        <Button onClick={() => void runBulk("reviewed_items")} disabled={pending}>
+          Approve all reviewed items
+        </Button>
+      </div>
 
-              <div className="mt-3 space-y-3">
-                {extractionListKeys.map((key) => {
-                  const list = extraction[key];
-                  if (list.length === 0) return null;
-                  return (
-                    <div key={key}>
-                      <p className="text-xs font-medium uppercase tracking-wide text-foreground/45">
-                        {key.replace(/_/g, " ")} ({list.length})
-                      </p>
-                      <ul className="mt-1 space-y-1.5">
-                        {list.map((entry, index) => (
-                          <li
-                            key={`${key}-${index}`}
-                            className="rounded-xl bg-foreground/[0.03] p-2.5 text-sm"
-                          >
-                            <p className="text-foreground">{entry.title}</p>
-                            {(entry.due_date ?? entry.date) ? (
-                              <p className="text-xs text-foreground/55">
-                                {entry.due_date ?? entry.date}
-                              </p>
-                            ) : null}
-                            {entry.weight ? (
-                              <p className="text-xs text-foreground/55">{entry.weight}</p>
-                            ) : null}
-                            <p className="mt-1 text-xs text-foreground/45">
-                              {entry.source.chapterTitle} · “{entry.source.sourceText}”
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+      <div className="space-y-3">
+        {items.map((item) => (
+          <AttentionRow
+            key={`${item.kind}-${item.id}`}
+            item={item}
+            onDone={() => void refresh()}
+            review={review}
+          />
+        ))}
       </div>
     </Panel>
+  );
+}
+
+type ReviewCall = (args: {
+  data: {
+    kind: AttentionItem["kind"];
+    id: string;
+    action: "approve" | "reject" | "edit";
+    title?: string;
+    date?: string | null;
+  };
+}) => Promise<{ ok: boolean; error?: string }>;
+
+function AttentionRow({
+  item,
+  onDone,
+  review,
+}: {
+  item: AttentionItem;
+  onDone: () => void;
+  review: ReviewCall;
+}) {
+  const [title, setTitle] = useState(item.title);
+  const [date, setDate] = useState(item.date ?? "");
+  const [busy, setBusy] = useState(false);
+
+  const supportsDate = item.kind !== "policy";
+  const edited = title !== item.title || (item.date ?? "") !== date;
+
+  async function submit(action: "approve" | "reject" | "edit") {
+    setBusy(true);
+    try {
+      await review({
+        data: {
+          kind: item.kind,
+          id: item.id,
+          action,
+          ...(action !== "reject" && edited
+            ? { title, ...(supportsDate ? { date: date === "" ? null : date } : {}) }
+            : {}),
+        },
+      });
+      onDone();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs uppercase tracking-wide text-foreground/45">
+          {item.kind} · {item.courseName ?? "course"}
+          {item.editedByUser ? " · edited by you" : ""}
+        </p>
+        <p className="text-xs text-foreground/45">{item.reason ?? "Needs a check"}</p>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+        <input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          className="w-full rounded-xl border border-border bg-transparent px-3 py-2 text-sm text-foreground"
+        />
+        {supportsDate ? (
+          <input
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            className="rounded-xl border border-border bg-transparent px-3 py-2 text-sm text-foreground"
+          />
+        ) : null}
+      </div>
+
+      {item.sourceText ? (
+        <p className="mt-2 text-xs text-foreground/45">From your file: “{item.sourceText}”</p>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          variant="brand"
+          onClick={() => void submit(edited ? "edit" : "approve")}
+          disabled={busy}
+        >
+          {edited ? "Save and approve" : "Approve"}
+        </Button>
+        <Button onClick={() => void submit("reject")} disabled={busy}>
+          Reject
+        </Button>
+      </div>
+    </div>
   );
 }
