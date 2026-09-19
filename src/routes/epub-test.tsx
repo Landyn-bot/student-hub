@@ -136,7 +136,9 @@ function EpubTestPage() {
             min={500}
             step={500}
             value={maxChars}
-            onChange={(e) => setMaxChars(Math.max(500, Number(e.target.value) || MAX_CHARS_DEFAULT))}
+            onChange={(e) =>
+              setMaxChars(Math.max(500, Number(e.target.value) || MAX_CHARS_DEFAULT))
+            }
             className="bg-background w-24 rounded border px-2 py-1"
           />
         </label>
@@ -163,7 +165,9 @@ function DocumentPanel({ doc, onAnalyze }: { doc: DocState; onAnalyze: () => voi
       </div>
 
       {doc.error && (
-        <p className="border-destructive text-destructive rounded border p-3 text-sm">{doc.error}</p>
+        <p className="border-destructive text-destructive rounded border p-3 text-sm">
+          {doc.error}
+        </p>
       )}
 
       {parsed && (
