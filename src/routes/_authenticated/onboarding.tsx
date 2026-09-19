@@ -86,13 +86,15 @@ function OnboardingPage() {
   useEffect(() => {
     if (!data) return;
     setSchool(data.school ?? "");
-    setTermName(data.term?.name ?? "");
-    setStartsOn(data.term?.starts_on ?? "");
-    setEndsOn(data.term?.ends_on ?? "");
+    // Keep the suggested semester unless one was already saved.
+    setTermName(data.term?.name ?? suggested.name);
+    setStartsOn(data.term?.starts_on ?? suggested.startsOn);
+    setEndsOn(data.term?.ends_on ?? suggested.endsOn);
     setWeekStartsOn(data.preferences.week_starts_on);
     setReminderHours(data.preferences.default_reminder_hours as 0 | 12 | 24 | 48 | 72);
     setPlanningStyle(data.preferences.planning_style);
-  }, [data]);
+    setEmailReminders(data.preferences.email_reminders);
+  }, [data, suggested]);
 
   const mutation = useMutation({
     mutationFn: () =>
