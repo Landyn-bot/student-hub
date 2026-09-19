@@ -11,7 +11,8 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
-import type { CourseExtraction } from "@/lib/course-content";
+import type { ChunkTrace, CourseExtraction } from "@/lib/course-content";
+import { recordImportRun } from "@/lib/import-store";
 import {
   CourseImportError,
   createImportId,
@@ -226,6 +227,18 @@ function ImportSemesterPage() {
           itemsSaved: saved.itemsSaved,
           examsSaved: saved.examsSaved,
           needsAttention: saved.needsAttention,
+        });
+        // Keep the pipeline trace for the developer view (session memory only).
+        recordImportRun({
+          importId: entry.importId,
+          sourceName: entry.fileName,
+          courseName: saved.courseName,
+          finishedAt: Date.now(),
+          chapters: normalized.chapters.length,
+          chunks: normalized.chunks.length,
+          trace,
+          extraction,
+          decisions: saved.decisions,
         });
         void queryClient.invalidateQueries({ queryKey: ["attention-items"] });
         void queryClient.invalidateQueries({ queryKey: ["courses"] });
