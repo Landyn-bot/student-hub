@@ -20,6 +20,7 @@ import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinancesRouteImport } from './routes/_authenticated/finances'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedImportDebugRouteImport } from './routes/_authenticated/import-debug'
 import { Route as AuthenticatedNemotronTestRouteImport } from './routes/_authenticated/nemotron-test'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -79,6 +80,12 @@ const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   path: '/import',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedImportDebugRoute =
+  AuthenticatedImportDebugRouteImport.update({
+    id: '/import-debug',
+    path: '/import-debug',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedNemotronTestRoute =
   AuthenticatedNemotronTestRouteImport.update({
     id: '/nemotron-test',
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finances': typeof AuthenticatedFinancesRoute
   '/import': typeof AuthenticatedImportRoute
+  '/import-debug': typeof AuthenticatedImportDebugRoute
   '/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -122,6 +130,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finances': typeof AuthenticatedFinancesRoute
   '/import': typeof AuthenticatedImportRoute
+  '/import-debug': typeof AuthenticatedImportDebugRoute
   '/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -139,6 +148,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finances': typeof AuthenticatedFinancesRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
+  '/_authenticated/import-debug': typeof AuthenticatedImportDebugRoute
   '/_authenticated/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/finances'
     | '/import'
+    | '/import-debug'
     | '/nemotron-test'
     | '/onboarding'
     | '/settings'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/finances'
     | '/import'
+    | '/import-debug'
     | '/nemotron-test'
     | '/onboarding'
     | '/settings'
@@ -187,6 +199,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/finances'
     | '/_authenticated/import'
+    | '/_authenticated/import-debug'
     | '/_authenticated/nemotron-test'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/import-debug': {
+      id: '/_authenticated/import-debug'
+      path: '/import-debug'
+      fullPath: '/import-debug'
+      preLoaderRoute: typeof AuthenticatedImportDebugRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/nemotron-test': {
       id: '/_authenticated/nemotron-test'
       path: '/nemotron-test'
@@ -310,6 +330,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinancesRoute: typeof AuthenticatedFinancesRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
+  AuthenticatedImportDebugRoute: typeof AuthenticatedImportDebugRoute
   AuthenticatedNemotronTestRoute: typeof AuthenticatedNemotronTestRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -323,6 +344,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancesRoute: AuthenticatedFinancesRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
+  AuthenticatedImportDebugRoute: AuthenticatedImportDebugRoute,
   AuthenticatedNemotronTestRoute: AuthenticatedNemotronTestRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
