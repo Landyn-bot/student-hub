@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
+import { getOnboardingState } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -27,10 +30,16 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
+  const fetchOnboarding = useServerFn(getOnboardingState);
+  const { data } = useQuery({
+    queryKey: ["onboarding"],
+    queryFn: () => fetchOnboarding(),
+  });
+
   return (
     <>
       <PageHeader
-        eyebrow="No term set up yet"
+        eyebrow={data?.term?.name ?? "Your current semester"}
         title="Your semester, kept in one glance."
         action={
           <Button variant="accent" asChild>
