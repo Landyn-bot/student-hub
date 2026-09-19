@@ -5,9 +5,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ErrorNote } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
