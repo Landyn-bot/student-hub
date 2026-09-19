@@ -199,10 +199,10 @@ function MonthView({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold text-foreground">{label}</h2>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => onMove(-1)}>
+          <Button size="sm" variant="soft" onClick={() => onMove(-1)}>
             ←
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => onMove(1)}>
+          <Button size="sm" variant="soft" onClick={() => onMove(1)}>
             →
           </Button>
         </div>
