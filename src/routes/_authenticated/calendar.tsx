@@ -95,7 +95,7 @@ function CalendarPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Button
           size="sm"
-          variant={courseFilter === null ? "accent" : "secondary"}
+          variant={variant={courseFilter === null ? "accent" : "soft"}}
           onClick={() => setCourseFilter(null)}
         >
           All courses
@@ -104,7 +104,7 @@ function CalendarPage() {
           <Button
             key={course.id}
             size="sm"
-            variant={courseFilter === course.id ? "accent" : "secondary"}
+            variant={variant={courseFilter === course.id ? "accent" : "soft"}}
             onClick={() => setCourseFilter(courseFilter === course.id ? null : course.id)}
           >
             {course.courseCode ?? course.name}
@@ -113,14 +113,14 @@ function CalendarPage() {
         <div className="ml-auto flex gap-2">
           <Button
             size="sm"
-            variant={view === "month" ? "accent" : "secondary"}
+            variant={variant={view === "month" ? "accent" : "soft"}}
             onClick={() => setView("month")}
           >
             Month
           </Button>
           <Button
             size="sm"
-            variant={view === "agenda" ? "accent" : "secondary"}
+            variant={variant={view === "agenda" ? "accent" : "soft"}}
             onClick={() => setView("agenda")}
           >
             Agenda
