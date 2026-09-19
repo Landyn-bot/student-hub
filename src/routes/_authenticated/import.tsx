@@ -2,7 +2,7 @@
 // exports into Syllo. Each .epub is uploaded, parsed, analysed, organized and saved end to
 // end, without asking the student to approve every extracted item. Only genuinely unresolved
 // items (unreadable dates, low confidence) are surfaced afterwards.
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
@@ -443,6 +443,12 @@ function FinishedSummary({ summary }: { summary: Summary }) {
           file again” above.
         </p>
       ) : null}
+      <Link
+        to="/import-debug"
+        className="mt-3 inline-block text-xs text-foreground/40 underline underline-offset-4 hover:text-foreground/70"
+      >
+        Developer view
+      </Link>
     </Panel>
   );
 }
