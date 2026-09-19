@@ -46,9 +46,10 @@ function AssignmentsPage() {
     const all = data?.items ?? [];
     return all
       .slice()
-      .sort((a, b) =>
-        (a.date ?? "9999").localeCompare(b.date ?? "9999") ||
-        (a.time ?? "").localeCompare(b.time ?? ""),
+      .sort(
+        (a, b) =>
+          (a.date ?? "9999").localeCompare(b.date ?? "9999") ||
+          (a.time ?? "").localeCompare(b.time ?? ""),
       );
   }, [data]);
 

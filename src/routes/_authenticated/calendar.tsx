@@ -50,7 +50,13 @@ function CalendarPage() {
   const [selected, setSelected] = useState<PlannerItem | null>(null);
 
   // Same cache key as the dashboard — imported data refreshes both views.
-  const { data: planner, isPending, isError, refetch, isRefetching } = useQuery({
+  const {
+    data: planner,
+    isPending,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["planner"],
     queryFn: () => fetchPlanner(),
   });
