@@ -467,6 +467,22 @@ export const saveCourseImport = createServerFn({ method: "POST" })
           budget,
         );
 
+        // Record what the reconciliation decided, before acting on it.
+        decisions.push({
+          kind: candidate.kind,
+          title: candidate.item.title,
+          action: decision.kind === "attention" ? "attention" : decision.kind,
+          date: candidate.date,
+          detail:
+            decision.kind === "insert"
+              ? "New to this course — saved."
+              : decision.kind === "attention"
+                ? `${decision.reason}: ${decision.detail}`
+                : decision.detail,
+          sourceText: candidate.item.source.sourceText,
+        });
+
+
         if (decision.kind === "insert") {
           const review = reviewFor(candidate.item, candidate.ambiguous);
           if (review.review_status === "needs_attention") needsAttention += 1;
