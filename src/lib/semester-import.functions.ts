@@ -620,6 +620,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         merged: mergedCount,
         autoResolved: resolvedCount,
         needsAttention,
+        decisions,
       };
     } catch (error) {
       console.error("[semester-import] save failed", {
