@@ -17,6 +17,8 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseItemDate } from "@/lib/import-dates";
+// Type only: the reconciliation engine itself is loaded inside the handler.
+import type { ExistingItem } from "@/lib/server/conflicts.server";
 
 /* ------------------------------------------------------------------ */
 /* Contract                                                            */
