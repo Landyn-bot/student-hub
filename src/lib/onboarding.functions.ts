@@ -18,7 +18,10 @@ export type OnboardingState = {
     week_starts_on: number;
     default_reminder_hours: number;
     planning_style: PlanningStyle;
+    email_reminders: boolean;
   };
+  // Reminders are sent to the address the student signed in with.
+  reminder_email: string | null;
 };
 
 const onboardingInput = z
