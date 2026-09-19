@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          color: string | null
+          course_code: string | null
+          created_at: string
+          credits: number | null
+          external_id: string | null
+          id: string
+          instructor: string | null
+          name: string
+          source: string
+          term_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          course_code?: string | null
+          created_at?: string
+          credits?: number | null
+          external_id?: string | null
+          id?: string
+          instructor?: string | null
+          name: string
+          source?: string
+          term_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          course_code?: string | null
+          created_at?: string
+          credits?: number | null
+          external_id?: string | null
+          id?: string
+          instructor?: string | null
+          name?: string
+          source?: string
+          term_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          school: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          school?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          school?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      terms: {
+        Row: {
+          created_at: string
+          ends_on: string | null
+          id: string
+          is_current: boolean
+          name: string
+          starts_on: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          is_current?: boolean
+          name: string
+          starts_on?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          is_current?: boolean
+          name?: string
+          starts_on?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
