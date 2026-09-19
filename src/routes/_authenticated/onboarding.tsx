@@ -107,6 +107,7 @@ function OnboardingPage() {
           week_starts_on: weekStartsOn,
           default_reminder_hours: reminderHours,
           planning_style: planningStyle,
+          email_reminders: emailReminders,
         },
       }),
     onSuccess: async () => {
