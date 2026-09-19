@@ -56,8 +56,8 @@ function CalendarPage() {
 
   const courses = planner?.courses ?? [];
   const items = useMemo(() => {
-    const dated = (planner?.items ?? []).filter(
-      (item): item is PlannerItem & { date: string } => Boolean(item.date),
+    const dated = (planner?.items ?? []).filter((item): item is PlannerItem & { date: string } =>
+      Boolean(item.date),
     );
     return courseFilter ? dated.filter((item) => item.courseId === courseFilter) : dated;
   }, [planner, courseFilter]);
