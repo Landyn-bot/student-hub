@@ -171,6 +171,7 @@ function ImportSemesterPage() {
 
       patch(entry.importId, { status: "analyzing" });
       let extraction: CourseExtraction;
+      let trace: ChunkTrace[] = [];
       try {
         const result = await analyze({ data: toAnalysisPayload(normalized) });
         if (!result.ok) {
@@ -181,6 +182,7 @@ function ImportSemesterPage() {
           return;
         }
         extraction = result.extraction;
+        trace = result.trace;
         patch(entry.importId, { extraction });
       } catch (error) {
         console.error("[import] analysis request failed", error);
