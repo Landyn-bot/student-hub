@@ -40,8 +40,9 @@ export type PlannerData = {
 function inferType(title: string, fallback: string): string {
   const text = title.toLowerCase();
   if (/\bquiz(zes)?\b/.test(text)) return "quiz";
-  if (/\bexam\b|\bmidterm\b|\bfinal\b/.test(text)) return "exam";
   if (/\bproject\b/.test(text)) return "project";
+  // "Final project" is a project, so the exam test runs after it.
+  if (/\bexam\b|\bmidterm\b|\bfinal(s)?\b/.test(text)) return "exam";
   if (/\bread(ing)?\b|\bchapter\b/.test(text)) return "reading";
   if (/\blab\b/.test(text)) return "lab";
   return fallback;
