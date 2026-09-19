@@ -8,6 +8,11 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { getProfile, updateProfile } from "@/lib/profile.functions";
+import {
+  completeOnboarding,
+  getOnboardingState,
+  type PlanningStyle,
+} from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -32,6 +37,8 @@ const fieldClass =
 function SettingsPage() {
   const fetchProfile = useServerFn(getProfile);
   const saveProfile = useServerFn(updateProfile);
+  const fetchOnboarding = useServerFn(getOnboardingState);
+  const saveOnboarding = useServerFn(completeOnboarding);
   const queryClient = useQueryClient();
 
   const { data } = useQuery({
@@ -41,6 +48,17 @@ function SettingsPage() {
 
   const [fullName, setFullName] = useState("");
   const [school, setSchool] = useState("");
+  const [termName, setTermName] = useState("");
+  const [startsOn, setStartsOn] = useState("");
+  const [endsOn, setEndsOn] = useState("");
+  const [weekStartsOn, setWeekStartsOn] = useState(1);
+  const [reminderHours, setReminderHours] = useState<0 | 12 | 24 | 48 | 72>(24);
+  const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
+
+  const { data: onboarding } = useQuery({
+    queryKey: ["onboarding"],
+    queryFn: () => fetchOnboarding(),
+  });
 
   useEffect(() => {
     if (data) {
@@ -49,17 +67,38 @@ function SettingsPage() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (!onboarding) return;
+    setSchool(onboarding.school ?? "");
+    setTermName(onboarding.term?.name ?? "");
+    setStartsOn(onboarding.term?.starts_on ?? "");
+    setEndsOn(onboarding.term?.ends_on ?? "");
+    setWeekStartsOn(onboarding.preferences.week_starts_on);
+    setReminderHours(onboarding.preferences.default_reminder_hours as 0 | 12 | 24 | 48 | 72);
+    setPlanningStyle(onboarding.preferences.planning_style);
+  }, [onboarding]);
+
   const mutation = useMutation({
-    mutationFn: () =>
-      saveProfile({
+    mutationFn: async () => {
+      await saveProfile({
+        data: { full_name: fullName.trim() || null, school: school.trim() || null },
+      });
+      await saveOnboarding({
         data: {
-          full_name: fullName.trim() || null,
-          school: school.trim() || null,
+          school,
+          term_name: termName,
+          starts_on: startsOn,
+          ends_on: endsOn,
+          week_starts_on: weekStartsOn,
+          default_reminder_hours: reminderHours,
+          planning_style: planningStyle,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("Profile saved");
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["onboarding"] });
     },
     onError: () => toast.error("Could not save your profile"),
   });
@@ -67,8 +106,8 @@ function SettingsPage() {
   return (
     <>
       <PageHeader eyebrow="Settings" title="Your account." />
-      <Panel className="max-w-xl">
-        <PanelHeader title="Profile" />
+      <Panel className="max-w-2xl">
+        <PanelHeader title="Profile & planner" />
         <form
           className="space-y-4"
           onSubmit={(event) => {
@@ -85,6 +124,79 @@ function SettingsPage() {
               placeholder="Your name"
             />
           </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm text-foreground/70">
+              Semester name
+              <input
+                className={fieldClass}
+                required
+                maxLength={100}
+                value={termName}
+                onChange={(event) => setTermName(event.target.value)}
+              />
+            </label>
+            <label className="block text-sm text-foreground/70">
+              Week starts on
+              <select
+                className={fieldClass}
+                value={weekStartsOn}
+                onChange={(event) => setWeekStartsOn(Number(event.target.value))}
+              >
+                <option value={0}>Sunday</option>
+                <option value={1}>Monday</option>
+                <option value={6}>Saturday</option>
+              </select>
+            </label>
+            <label className="block text-sm text-foreground/70">
+              Semester starts
+              <input
+                className={fieldClass}
+                type="date"
+                required
+                value={startsOn}
+                onChange={(event) => setStartsOn(event.target.value)}
+              />
+            </label>
+            <label className="block text-sm text-foreground/70">
+              Semester ends
+              <input
+                className={fieldClass}
+                type="date"
+                required
+                min={startsOn}
+                value={endsOn}
+                onChange={(event) => setEndsOn(event.target.value)}
+              />
+            </label>
+            <label className="block text-sm text-foreground/70">
+              Planning style
+              <select
+                className={fieldClass}
+                value={planningStyle}
+                onChange={(event) => setPlanningStyle(event.target.value as PlanningStyle)}
+              >
+                <option value="early">Work ahead</option>
+                <option value="balanced">Balanced</option>
+                <option value="deadline">Deadline focused</option>
+              </select>
+            </label>
+            <label className="block text-sm text-foreground/70">
+              Default reminder
+              <select
+                className={fieldClass}
+                value={reminderHours}
+                onChange={(event) =>
+                  setReminderHours(Number(event.target.value) as 0 | 12 | 24 | 48 | 72)
+                }
+              >
+                <option value={0}>No reminder</option>
+                <option value={12}>12 hours before</option>
+                <option value={24}>1 day before</option>
+                <option value={48}>2 days before</option>
+                <option value={72}>3 days before</option>
+              </select>
+            </label>
+          </div>
           <label className="block text-sm text-foreground/70">
             School
             <input

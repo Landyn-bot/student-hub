@@ -638,26 +638,38 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          default_reminder_hours: number
           full_name: string | null
           id: string
+          onboarding_completed_at: string | null
+          planning_style: string
           school: string | null
           updated_at: string
+          week_starts_on: number
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          default_reminder_hours?: number
           full_name?: string | null
           id: string
+          onboarding_completed_at?: string | null
+          planning_style?: string
           school?: string | null
           updated_at?: string
+          week_starts_on?: number
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          default_reminder_hours?: number
           full_name?: string | null
           id?: string
+          onboarding_completed_at?: string | null
+          planning_style?: string
           school?: string | null
           updated_at?: string
+          week_starts_on?: number
         }
         Relationships: []
       }
@@ -735,6 +747,7 @@ export type Database = {
           is_current: boolean
           name: string
           starts_on: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -744,6 +757,7 @@ export type Database = {
           is_current?: boolean
           name: string
           starts_on?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -753,6 +767,7 @@ export type Database = {
           is_current?: boolean
           name?: string
           starts_on?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -762,7 +777,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_onboarding: {
+        Args: {
+          _default_reminder_hours: number
+          _ends_on: string
+          _planning_style: string
+          _school: string
+          _starts_on: string
+          _term_name: string
+          _week_starts_on: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
