@@ -4,7 +4,7 @@
 // The API key is read from a server environment secret and never leaves the server.
 
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1";
-const DEFAULT_MODEL = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+const DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b";
 
 // Generous ceiling: large course readings can take a long time to analyse.
 const REQUEST_TIMEOUT_MS = 180_000;
