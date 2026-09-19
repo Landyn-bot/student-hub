@@ -106,6 +106,7 @@ export const analyzeCourseContentStructured = createServerFn({ method: "POST" })
         model: run.model,
         extraction: run.extraction,
         chunkResults: run.chunkResults,
+        trace: run.trace,
         chunksAnalyzed: run.chunksAnalyzed,
         chunksFailed: run.chunksFailed,
         latencyMs: Date.now() - startedAt,

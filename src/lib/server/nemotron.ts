@@ -14,6 +14,7 @@ import {
   extractionListKeys,
   modelExtractionSchema,
   type ChunkAnalysis,
+  type ChunkTrace,
   type CourseContentChunk,
   type CourseContentPayload,
   type CourseExtraction,
@@ -236,6 +237,8 @@ export type ExtractionRun = {
   model: string;
   extraction: CourseExtraction;
   chunkResults: ChunkAnalysis[];
+  /** One entry per semantic interpretation step, for the developer debug view. */
+  trace: ChunkTrace[];
   chunksAnalyzed: number;
   chunksFailed: number;
 };
@@ -276,6 +279,7 @@ export async function extractCourseContent(payload: CourseContentPayload): Promi
     model,
     extraction,
     chunkResults,
+    trace: outcomes.map((outcome) => outcome.trace),
     chunksAnalyzed: chunkResults.length - chunksFailed,
     chunksFailed,
   };
