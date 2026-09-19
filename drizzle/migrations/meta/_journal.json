@@ -43,6 +43,13 @@
       "when": 1789843947250,
       "tag": "0005_add_email_reminders_preference",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789857214178,
+      "tag": "0006_imported_item_review_state",
+      "breakpoints": true
     }
   ]
 }

@@ -24,9 +24,14 @@ export type Database = {
           description: string | null
           due_date: string | null
           due_time: string | null
+          edited_at: string | null
+          edited_by_user: boolean
           id: string
+          needs_attention_reason: string | null
           points: number | null
           priority: string
+          review_status: string
+          source_chunk_key: string | null
           source_document_id: string | null
           source_page: number | null
           source_text: string | null
@@ -45,9 +50,14 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           due_time?: string | null
+          edited_at?: string | null
+          edited_by_user?: boolean
           id?: string
+          needs_attention_reason?: string | null
           points?: number | null
           priority?: string
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -66,9 +76,14 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           due_time?: string | null
+          edited_at?: string | null
+          edited_by_user?: boolean
           id?: string
+          needs_attention_reason?: string | null
           points?: number | null
           priority?: string
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -139,18 +154,24 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          ai_confidence: number | null
           ai_generated: boolean
           all_day: boolean
           assignment_id: string | null
           course_id: string | null
           created_at: string
           description: string | null
+          edited_at: string | null
+          edited_by_user: boolean
           ends_at: string | null
           event_type: string
           exam_id: string | null
           id: string
           location: string | null
+          needs_attention_reason: string | null
           recurrence_rule: string | null
+          review_status: string
+          source_chunk_key: string | null
           source_document_id: string | null
           source_text: string | null
           starts_at: string | null
@@ -159,18 +180,24 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_confidence?: number | null
           ai_generated?: boolean
           all_day?: boolean
           assignment_id?: string | null
           course_id?: string | null
           created_at?: string
           description?: string | null
+          edited_at?: string | null
+          edited_by_user?: boolean
           ends_at?: string | null
           event_type?: string
           exam_id?: string | null
           id?: string
           location?: string | null
+          needs_attention_reason?: string | null
           recurrence_rule?: string | null
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_text?: string | null
           starts_at?: string | null
@@ -179,18 +206,24 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_confidence?: number | null
           ai_generated?: boolean
           all_day?: boolean
           assignment_id?: string | null
           course_id?: string | null
           created_at?: string
           description?: string | null
+          edited_at?: string | null
+          edited_by_user?: boolean
           ends_at?: string | null
           event_type?: string
           exam_id?: string | null
           id?: string
           location?: string | null
+          needs_attention_reason?: string | null
           recurrence_rule?: string | null
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_text?: string | null
           starts_at?: string | null
@@ -382,12 +415,18 @@ export type Database = {
       }
       course_policies: {
         Row: {
+          ai_confidence: number | null
           ai_generated: boolean
           content: string | null
           course_id: string | null
           created_at: string
+          edited_at: string | null
+          edited_by_user: boolean
           id: string
+          needs_attention_reason: string | null
           policy_type: string
+          review_status: string
+          source_chunk_key: string | null
           source_document_id: string | null
           source_page: number | null
           source_text: string | null
@@ -396,12 +435,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_confidence?: number | null
           ai_generated?: boolean
           content?: string | null
           course_id?: string | null
           created_at?: string
+          edited_at?: string | null
+          edited_by_user?: boolean
           id?: string
+          needs_attention_reason?: string | null
           policy_type?: string
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -410,12 +455,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_confidence?: number | null
           ai_generated?: boolean
           content?: string | null
           course_id?: string | null
           created_at?: string
+          edited_at?: string | null
+          edited_by_user?: boolean
           id?: string
+          needs_attention_reason?: string | null
           policy_type?: string
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -495,16 +546,22 @@ export type Database = {
       }
       exams: {
         Row: {
+          ai_confidence: number | null
           ai_generated: boolean
           course_id: string | null
           created_at: string
           description: string | null
+          edited_at: string | null
+          edited_by_user: boolean
           end_time: string | null
           exam_date: string | null
           exam_type: string | null
           id: string
           location: string | null
+          needs_attention_reason: string | null
           points: number | null
+          review_status: string
+          source_chunk_key: string | null
           source_document_id: string | null
           source_text: string | null
           start_time: string | null
@@ -514,16 +571,22 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          ai_confidence?: number | null
           ai_generated?: boolean
           course_id?: string | null
           created_at?: string
           description?: string | null
+          edited_at?: string | null
+          edited_by_user?: boolean
           end_time?: string | null
           exam_date?: string | null
           exam_type?: string | null
           id?: string
           location?: string | null
+          needs_attention_reason?: string | null
           points?: number | null
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_text?: string | null
           start_time?: string | null
@@ -533,16 +596,22 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          ai_confidence?: number | null
           ai_generated?: boolean
           course_id?: string | null
           created_at?: string
           description?: string | null
+          edited_at?: string | null
+          edited_by_user?: boolean
           end_time?: string | null
           exam_date?: string | null
           exam_type?: string | null
           id?: string
           location?: string | null
+          needs_attention_reason?: string | null
           points?: number | null
+          review_status?: string
+          source_chunk_key?: string | null
           source_document_id?: string | null
           source_text?: string | null
           start_time?: string | null
