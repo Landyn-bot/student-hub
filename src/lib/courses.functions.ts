@@ -14,12 +14,15 @@ export type Course = {
 export const listCourses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Course[]> => {
+    // The user filter complements database access rules and makes ownership explicit.
     const { data, error } = await context.supabase
       .from("courses")
       .select("id, name, course_code, instructor, credits, source")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
     return data ?? [];
   });

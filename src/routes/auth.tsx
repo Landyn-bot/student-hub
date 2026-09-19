@@ -40,8 +40,11 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // Send returning students directly to their workspace.
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) {
+        navigate({ to: "/dashboard", replace: true });
+      }
     });
   }, [navigate]);
 
@@ -84,7 +87,9 @@ function AuthPage() {
       toast.error("Google sign-in failed");
       return;
     }
-    if (result.redirected) return;
+    if (result.redirected) {
+      return;
+    }
     navigate({ to: "/dashboard", replace: true });
   }
 
@@ -182,13 +187,15 @@ function AuthPage() {
 
           <p className="mt-6 text-center text-sm text-foreground/55">
             {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               className="font-medium text-primary underline-offset-4 hover:underline"
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             >
               {mode === "signin" ? "Create an account" : "Sign in"}
-            </button>
+            </Button>
           </p>
         </div>
       </main>

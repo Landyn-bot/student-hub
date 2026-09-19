@@ -6,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
+    // Keep every child page behind the active Lovable Cloud session.
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (error || !data.user) {
+      throw redirect({ to: "/auth" });
+    }
     return { user: data.user };
   },
   component: AuthenticatedLayout,
@@ -16,7 +19,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const { user } = Route.useRouteContext();
   const displayName =
-    (user.user_metadata?.['full_name'] as string | undefined) ??
+    (user.user_metadata?.["full_name"] as string | undefined) ??
     user.email?.split("@")[0] ??
     "Student";
 

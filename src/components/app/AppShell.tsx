@@ -24,6 +24,7 @@ export function AppShell({
   const navigate = useNavigate();
 
   async function handleSignOut() {
+    // Clear private cached data before ending the cloud session.
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
@@ -34,13 +35,15 @@ export function AppShell({
     <div className="min-h-screen bg-background font-body text-foreground">
       <header className="sticky top-0 z-20 bg-background/85 ring-1 ring-black/5 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-5 sm:px-8">
-          <button
+          <Button
+            variant="soft"
+            size="icon"
             onClick={() => setMobileOpen(true)}
-            className="grid size-10 place-items-center rounded-xl bg-card text-foreground/70 ring-1 ring-black/5 lg:hidden"
+            className="lg:hidden"
             aria-label="Open navigation"
           >
             <Menu className="size-4" />
-          </button>
+          </Button>
 
           <Link to="/dashboard" className="flex items-center gap-2">
             <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
@@ -52,9 +55,11 @@ export function AppShell({
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
-            <button
+            <Button
+              variant="soft"
+              size="sm"
               onClick={handleSignOut}
-              className="flex items-center gap-2 rounded-xl bg-card py-1 pl-1 pr-3 ring-1 ring-black/5 transition-transform hover:-translate-y-px"
+              className="h-9 gap-2 py-1 pl-1 pr-3"
             >
               <span className="grid size-7 place-items-center rounded-[10px] bg-accent/90 text-xs font-semibold text-accent-foreground">
                 {initials(displayName)}
@@ -63,7 +68,7 @@ export function AppShell({
                 {displayName}
               </span>
               <span className="text-xs text-foreground/40">Sign out</span>
-            </button>
+            </Button>
           </div>
         </div>
       </header>

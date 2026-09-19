@@ -2,6 +2,8 @@
 
 Syllo is a personal college operating system that brings courses, assignments, calendars, finances, and study tools into one focused workspace.
 
+Authentication, data, and file storage are powered by Lovable Cloud.
+
 Built for SteelHacks XIII 2026 with [Lovable](https://lovable.dev).
 
 ## Continue building with Lovable
