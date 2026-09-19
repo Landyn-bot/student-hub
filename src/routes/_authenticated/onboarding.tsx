@@ -208,12 +208,7 @@ function OnboardingPage() {
             {step === 0 ? (
               <div className="block max-w-lg text-sm font-medium text-foreground/75">
                 School or university
-                <SchoolField
-                  autoFocus
-                  className={fieldClass}
-                  value={school}
-                  onChange={setSchool}
-                />
+                <SchoolField autoFocus className={fieldClass} value={school} onChange={setSchool} />
                 <p className="mt-2 text-xs font-normal text-foreground/45">
                   Start typing to search U.S. colleges and universities.
                 </p>
