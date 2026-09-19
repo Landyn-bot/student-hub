@@ -18,6 +18,7 @@ import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated/courses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinancesRouteImport } from './routes/_authenticated/finances'
+import { Route as AuthenticatedNemotronTestRouteImport } from './routes/_authenticated/nemotron-test'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 
@@ -66,6 +67,12 @@ const AuthenticatedFinancesRoute = AuthenticatedFinancesRouteImport.update({
   path: '/finances',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNemotronTestRoute =
+  AuthenticatedNemotronTestRouteImport.update({
+    id: '/nemotron-test',
+    path: '/nemotron-test',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finances': typeof AuthenticatedFinancesRoute
+  '/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
 }
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finances': typeof AuthenticatedFinancesRoute
+  '/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
 }
@@ -112,6 +121,7 @@ export interface FileRoutesById {
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finances': typeof AuthenticatedFinancesRoute
+  '/_authenticated/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
 }
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/dashboard'
     | '/finances'
+    | '/nemotron-test'
     | '/onboarding'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/dashboard'
     | '/finances'
+    | '/nemotron-test'
     | '/onboarding'
     | '/settings'
   id:
@@ -151,6 +163,7 @@ export interface FileRouteTypes {
     | '/_authenticated/courses'
     | '/_authenticated/dashboard'
     | '/_authenticated/finances'
+    | '/_authenticated/nemotron-test'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
   fileRoutesById: FileRoutesById
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinancesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/nemotron-test': {
+      id: '/_authenticated/nemotron-test'
+      path: '/nemotron-test'
+      fullPath: '/nemotron-test'
+      preLoaderRoute: typeof AuthenticatedNemotronTestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -250,6 +270,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinancesRoute: typeof AuthenticatedFinancesRoute
+  AuthenticatedNemotronTestRoute: typeof AuthenticatedNemotronTestRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
@@ -261,6 +282,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancesRoute: AuthenticatedFinancesRoute,
+  AuthenticatedNemotronTestRoute: AuthenticatedNemotronTestRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
