@@ -200,8 +200,8 @@ function OnboardingPage() {
                 {step === 0
                   ? "This keeps your workspace grounded in your school."
                   : step === 1
-                    ? "Dates help Syllo frame your calendar without adding any coursework."
-                    : "These defaults shape future reminders and weekly views."}
+                    ? "We filled in the typical dates for this time of year — just check them."
+                    : "These defaults shape your reminders and weekly views."}
               </p>
             </div>
 
