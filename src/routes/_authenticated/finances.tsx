@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useServerFn } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 
@@ -53,7 +54,7 @@ function formatMoney(amount: number, currency: string): string {
 }
 
 function formatDate(iso: string): string {
-  const [year, month, day] = iso.split("-").map(Number);
+  const [year = 0, month = 1, day = 1] = iso.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
