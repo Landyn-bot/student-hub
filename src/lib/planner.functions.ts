@@ -73,37 +73,37 @@ export const getPlannerData = createServerFn({ method: "GET" })
 
     const [courses, assignments, exams, events, attentionA, attentionE, attentionC] =
       await Promise.all([
-      supabase
-        .from("courses")
-        .select("id, name, course_code, instructor")
-        .eq("user_id", userId)
-        .order("name", { ascending: true }),
-      supabase
-        .from("assignments")
-        .select(
-          "id, title, description, due_date, due_time, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
-        )
-        .eq("user_id", userId)
-        .eq("review_status", "approved")
-        .neq("status", "done"),
-      supabase
-        .from("exams")
-        .select(
-          "id, title, description, exam_date, start_time, location, exam_type, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
-        )
-        .eq("user_id", userId)
-        .eq("review_status", "approved"),
-      supabase
-        .from("calendar_events")
-        .select(
-          "id, title, description, starts_at, all_day, location, event_type, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
-        )
-        .eq("user_id", userId)
-        .eq("review_status", "approved"),
-      attentionCountFor("assignments"),
-      attentionCountFor("exams"),
-      attentionCountFor("calendar_events"),
-    ]);
+        supabase
+          .from("courses")
+          .select("id, name, course_code, instructor")
+          .eq("user_id", userId)
+          .order("name", { ascending: true }),
+        supabase
+          .from("assignments")
+          .select(
+            "id, title, description, due_date, due_time, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
+          )
+          .eq("user_id", userId)
+          .eq("review_status", "approved")
+          .neq("status", "done"),
+        supabase
+          .from("exams")
+          .select(
+            "id, title, description, exam_date, start_time, location, exam_type, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
+          )
+          .eq("user_id", userId)
+          .eq("review_status", "approved"),
+        supabase
+          .from("calendar_events")
+          .select(
+            "id, title, description, starts_at, all_day, location, event_type, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
+          )
+          .eq("user_id", userId)
+          .eq("review_status", "approved"),
+        attentionCountFor("assignments"),
+        attentionCountFor("exams"),
+        attentionCountFor("calendar_events"),
+      ]);
 
     type Joined = {
       courses?: { name: string } | null;
@@ -180,7 +180,6 @@ export const getPlannerData = createServerFn({ method: "GET" })
         instructor: row.instructor,
       })),
       items,
-      attentionCount:
-        (attentionA.count ?? 0) + (attentionE.count ?? 0) + (attentionC.count ?? 0),
+      attentionCount: (attentionA.count ?? 0) + (attentionE.count ?? 0) + (attentionC.count ?? 0),
     };
   });

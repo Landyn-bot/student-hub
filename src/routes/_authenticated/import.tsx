@@ -227,6 +227,7 @@ function ImportSemesterPage() {
         });
         void queryClient.invalidateQueries({ queryKey: ["attention-items"] });
         void queryClient.invalidateQueries({ queryKey: ["courses"] });
+        void queryClient.invalidateQueries({ queryKey: ["planner"] });
       } catch (error) {
         console.error("[import] saving failed", error);
         patch(entry.importId, {
