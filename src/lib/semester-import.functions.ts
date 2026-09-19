@@ -458,7 +458,8 @@ export const reviewImportedItem = createServerFn({ method: "POST" })
 
     const { error } = await supabase
       .from(table)
-      .update(patch)
+      // The patch is built from a validated union above; the table varies by item kind.
+      .update(patch as never)
       .eq("id", data.id)
       .eq("user_id", userId);
 
