@@ -51,6 +51,12 @@ backend/.venv/bin/uvicorn app.main:app --reload --app-dir backend
 
 The health endpoint is available at `http://127.0.0.1:8000/health`. Backend database, EPUB, AI, authentication, and frontend integration work remains sequenced in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
+Phase 2 initializes the local SQLite database at `backend/var/app.db`:
+
+```sh
+backend/.venv/bin/python -c "from app.db import init_db; init_db()"
+```
+
 ## Legacy Notes
 
 Useful planning notes from the former root roadmap are preserved in [docs/LEGACY-FRONTEND-NOTES.md](docs/LEGACY-FRONTEND-NOTES.md). That file is informational and is not authoritative for the MVP architecture.

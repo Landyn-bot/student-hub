@@ -8,8 +8,8 @@ Inspect an authorized EPUB and verify the exact NVIDIA Nemotron endpoint, model,
 ## Phase 1: Freeze Contracts
 Define Pydantic academic, IR, API, and Ask schemas. Generate schema artifacts and agree on frontend types. Add environment templates and safe ignore rules during implementation, without exposing secrets.
 
-## Phase 2: Private Workspace and Persistence
-Implement target SQLite/SQLAlchemy tables, private session ownership, CSRF/origin checks, expiry, and scoped query helpers. Test that separate workspaces cannot access one another.
+## Phase 2: Local Data Foundation
+Implement the simplified local SQLite/SQLAlchemy persistence foundation using exactly five tables: `imports`, `courses`, `sources`, `academic_items`, and `evidence`. Defer workspace tables, sessions, authentication, CSRF/access-code infrastructure, issue tables, correction history, and scoped query helpers until a later phase. This phase does not implement uploads, EPUB parsing, AI, or API resource endpoints.
 
 ## Phase 3: Bounded EPUB Reader
 Implement safe ZIP/XML/HTML handling, normalization, chunks, offsets, warnings, and parser tests. Malicious fixtures must fail before any AI call.
@@ -30,7 +30,7 @@ Implement deterministic deadline queries, bounded lexical retrieval, citation va
 Run parser safety, authorization, transaction, date, model-contract, browser, secret-scan, and build checks. Measure fixture precision, recall, date accuracy, citation resolution, abstention, latency, and model calls. Rehearse the local demo.
 
 ## Deferred Work
-Azure, PostgreSQL migration, Docker, distributed workers, live Canvas API integration, production accounts, PDF/OCR, mobile, embeddings, banking, and financial advice remain future or post-hackathon work. They must not displace the core local MVP.
+Workspace/session/authentication infrastructure, CSRF/access codes, issue and correction tables, Azure, PostgreSQL migration, Docker, distributed workers, live Canvas API integration, production accounts, PDF/OCR, mobile, embeddings, banking, and financial advice remain future or post-hackathon work. The larger workspace-oriented architecture may be revisited after the simplified local MVP data foundation is proven.
 
 ## Definition of Done
 The MVP is ready only when two synthetic courses import, invalid files are rejected safely, facts are evidence-backed, missing/conflicting data is visible, Ask cites or abstains, ownership works, deletion works, and the local demo passes without pretending that unverified live behavior is complete.
