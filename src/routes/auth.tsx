@@ -10,17 +10,19 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — Syllabus" },
+      { title: "Sign in — Syllo" },
       {
         name: "description",
         content:
-          "Sign in to Syllabus, the calm planner for your whole semester.",
+          "Sign in to Syllo, the calm planner for your whole semester.",
       },
-      { property: "og:title", content: "Sign in — Syllabus" },
+      { property: "og:title", content: "Sign in — Syllo" },
       {
         property: "og:description",
-        content: "Sign in to Syllabus, the calm planner for your semester.",
+        content: "Sign in to Syllo, the calm planner for your semester.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
@@ -94,7 +96,7 @@ function AuthPage() {
             S
           </span>
           <span className="font-display text-lg font-semibold tracking-tight">
-            Syllabus
+            Syllo
           </span>
         </Link>
       </header>

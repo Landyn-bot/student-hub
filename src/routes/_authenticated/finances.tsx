@@ -7,16 +7,18 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 export const Route = createFileRoute("/_authenticated/finances")({
   head: () => ({
     meta: [
-      { title: "Finances — Syllabus" },
+      { title: "Finances — Syllo" },
       {
         name: "description",
         content: "Tuition, books, rent and everyday spending in one ledger.",
       },
-      { property: "og:title", content: "Finances — Syllabus" },
+      { property: "og:title", content: "Finances — Syllo" },
       {
         property: "og:description",
         content: "Tuition, books, rent and everyday spending in one ledger.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: FinancesPage,

@@ -7,16 +7,18 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — Syllabus" },
+      { title: "Calendar — Syllo" },
       {
         name: "description",
         content: "Classes, deadlines and personal events on one calm timeline.",
       },
-      { property: "og:title", content: "Calendar — Syllabus" },
+      { property: "og:title", content: "Calendar — Syllo" },
       {
         property: "og:description",
         content: "Classes, deadlines and personal events on one calm timeline.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CalendarPage,

@@ -7,16 +7,18 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 export const Route = createFileRoute("/_authenticated/assistant")({
   head: () => ({
     meta: [
-      { title: "AI Assistant — Syllabus" },
+      { title: "AI Assistant — Syllo" },
       {
         name: "description",
         content: "A study assistant that knows your own course material.",
       },
-      { property: "og:title", content: "AI Assistant — Syllabus" },
+      { property: "og:title", content: "AI Assistant — Syllo" },
       {
         property: "og:description",
         content: "A study assistant that knows your own course material.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AssistantPage,
