@@ -74,6 +74,19 @@ const saveInputSchema = z.object({
 
 export type SaveCourseImportInput = z.input<typeof saveInputSchema>;
 
+/**
+ * What happened to one extracted item once it met the data already stored. Returned so the
+ * developer debug view can show the final structured result beside the interpretation.
+ */
+export type SaveDecision = {
+  kind: ReviewKind;
+  title: string;
+  action: "insert" | "merge" | "supersede" | "attention";
+  date: string | null;
+  detail: string;
+  sourceText: string;
+};
+
 export type SaveCourseImportResult =
   | {
       ok: true;
@@ -87,6 +100,7 @@ export type SaveCourseImportResult =
       /** Disagreements the system settled on its own from the source wording. */
       autoResolved: number;
       needsAttention: number;
+      decisions: SaveDecision[];
     }
   | { ok: false; error: string };
 
