@@ -190,14 +190,17 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         found = byCode.data ?? null;
       }
       if (!found) {
-        const byName = await supabase
+        // Course titles differ between exports ("PHYS 0475 Intro Physics" vs "Intro Physics"),
+        // so a close wording match counts as the same course.
+        const { data: courses } = await supabase
           .from("courses")
-          .select("id")
-          .eq("user_id", userId)
-          .ilike("name", courseName)
-          .limit(1)
-          .maybeSingle();
-        found = byName.data ?? null;
+          .select("id, name")
+          .eq("user_id", userId);
+        const { titleSimilarity } = await import("@/lib/server/conflicts.server");
+        const close = (courses ?? [])
+          .map((row) => ({ row, score: titleSimilarity(courseName, row.name) }))
+          .sort((a, b) => b.score - a.score)[0];
+        if (close && close.score >= 0.6) found = { id: close.row.id };
       }
 
       let courseId = found?.id ?? null;
