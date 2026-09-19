@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import {
+  courseContentPayloadSchema,
+  type AnalyzeCourseContentResponse,
+} from "@/lib/course-content";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Shape the future EPUB pipeline will post: parser -> normalized text -> here.
@@ -70,5 +74,62 @@ export const analyzeCourseContent = createServerFn({ method: "POST" })
         reason: error instanceof Error ? error.message : String(error),
       });
       return { ok: false, kind: "unknown", error: "Unexpected server error.", latencyMs };
+    }
+  });
+
+/**
+ * analyze-course-content (structured): accepts the normalized course-content payload that
+ * any ingestion source produces (EPUB today, Canvas/PDF/DOCX later) and returns Syllo's own
+ * structured extraction. The browser never learns which model or vendor is behind this.
+ */
+export const analyzeCourseContentStructured = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => courseContentPayloadSchema.parse(input))
+  .handler(async ({ data, context }): Promise<AnalyzeCourseContentResponse> => {
+    const startedAt = Date.now();
+    // Server-only import: keeps the NVIDIA client and its key out of every client bundle.
+    const { extractCourseContent, NemotronError } = await import("@/lib/server/nemotron");
+
+    console.log("[analyze-course-content] structured request", {
+      userId: context.userId,
+      sourceName: data.sourceName,
+      chapters: data.chapters.length,
+      chunks: data.chunks.length,
+      totalChars: data.chunks.reduce((n, chunk) => n + chunk.text.length, 0),
+    });
+
+    try {
+      const run = await extractCourseContent(data);
+      return {
+        ok: true,
+        sourceName: data.sourceName,
+        model: run.model,
+        extraction: run.extraction,
+        chunkResults: run.chunkResults,
+        chunksAnalyzed: run.chunksAnalyzed,
+        chunksFailed: run.chunksFailed,
+        latencyMs: Date.now() - startedAt,
+      };
+    } catch (error) {
+      const latencyMs = Date.now() - startedAt;
+      if (error instanceof NemotronError) {
+        return {
+          ok: false,
+          sourceName: data.sourceName,
+          kind: error.kind,
+          error: error.message,
+          latencyMs,
+        };
+      }
+      console.error("[analyze-course-content] structured failure", {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        ok: false,
+        sourceName: data.sourceName,
+        kind: "unknown",
+        error: "Unexpected server error.",
+        latencyMs,
+      };
     }
   });
