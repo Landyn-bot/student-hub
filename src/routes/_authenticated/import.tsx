@@ -505,10 +505,11 @@ function AttentionPanel() {
     queryFn: () => listAttentionItems(),
   });
 
-  const refresh = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: ["attention-items"] }),
-    [queryClient],
-  );
+  // Resolving an item changes the planner too, so both views refresh together.
+  const refresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["attention-items"] });
+    await queryClient.invalidateQueries({ queryKey: ["planner"] });
+  }, [queryClient]);
 
   async function runBulk(scope: "high_confidence_assignments" | "reviewed_items") {
     setPending(true);
