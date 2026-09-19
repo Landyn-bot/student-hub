@@ -496,9 +496,7 @@ export const bulkApproveItems = createServerFn({ method: "POST" })
       approved = rows?.length ?? 0;
     } else {
       // Items the student already edited: they have looked at these, so approving is safe.
-      for (const table of tableFor
-        ? (["assignments", "exams", "calendar_events", "course_policies"] as const)
-        : []) {
+      for (const table of ["assignments", "exams", "calendar_events", "course_policies"] as const) {
         const { data: rows } = await supabase
           .from(table)
           .update({ review_status: "approved", needs_attention_reason: null })
