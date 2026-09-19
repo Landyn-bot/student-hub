@@ -554,6 +554,8 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         userId,
         courseId,
         itemsSaved,
+        mergedCount,
+        resolvedCount,
         needsAttention,
       });
 
@@ -563,7 +565,9 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         courseName,
         documentId: document.id,
         itemsSaved,
-        examsSaved: examRows.length,
+        examsSaved,
+        merged: mergedCount,
+        autoResolved: resolvedCount,
         needsAttention,
       };
     } catch (error) {
