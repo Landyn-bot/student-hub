@@ -38,7 +38,18 @@ npm install
 npm run dev
 ```
 
-Backend setup is intentionally deferred to the implementation phases in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+### Backend
+
+The Phase 1 backend lives under `backend/` and uses the repository's Python 3.14.3 interpreter:
+
+```sh
+python3 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -e "backend[dev]"
+backend/.venv/bin/pytest
+backend/.venv/bin/uvicorn app.main:app --reload --app-dir backend
+```
+
+The health endpoint is available at `http://127.0.0.1:8000/health`. Backend database, EPUB, AI, authentication, and frontend integration work remains sequenced in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Legacy Notes
 
