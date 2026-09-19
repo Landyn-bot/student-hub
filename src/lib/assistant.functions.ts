@@ -35,7 +35,10 @@ const MAX_CONTEXT_ITEMS = 80;
 type ConversationRow = { id: string; title: string };
 
 /** Finds the student's single ongoing conversation, creating it on first use. */
-async function getOrCreateConversation(supabase: any, userId: string): Promise<ConversationRow> {
+async function getOrCreateConversation(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<ConversationRow> {
   const existing = await supabase
     .from("chat_conversations")
     .select("id, title")
