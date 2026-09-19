@@ -102,6 +102,18 @@ function reviewFor(item: Item, ambiguousDate: boolean): {
   return { review_status: "approved", needs_attention_reason: null };
 }
 
+/**
+ * The date for an item: what the model reported, or failing that the date literally written
+ * in the sentence the item was quoted from. Nothing is inferred beyond what the text says.
+ */
+function dateFor(item: Item, year: number, preferDue: boolean) {
+  const stated = preferDue ? (item.due_date ?? item.date) : (item.date ?? item.due_date);
+  const parsed = parseItemDate(stated, year);
+  if (parsed.date !== null) return parsed;
+  if ((stated ?? "").trim().length > 0) return parsed;
+  return parseItemDate(item.source.sourceText, year);
+}
+
 function referenceYearFrom(semester: string | null): number {
   const match = /(20\d{2})/.exec(semester ?? "");
   return match ? Number(match[1]) : new Date().getUTCFullYear();
@@ -214,7 +226,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         ...extraction.quizzes,
         ...extraction.projects,
       ].map((item) => {
-        const parsed = parseItemDate(item.due_date ?? item.date, year);
+        const parsed = dateFor(item, year, true);
         return {
           ...common(item, parsed.date === null && parsed.ambiguous),
           description: item.description ?? null,
@@ -223,7 +235,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
       });
 
       const examRows = extraction.exams.map((item) => {
-        const parsed = parseItemDate(item.date ?? item.due_date, year);
+        const parsed = dateFor(item, year, false);
         return {
           ...common(item, parsed.date === null && parsed.ambiguous),
           description: item.description ?? null,
@@ -232,7 +244,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
       });
 
       const eventRows = [...extraction.important_dates, ...extraction.readings].map((item) => {
-        const parsed = parseItemDate(item.date ?? item.due_date, year);
+        const parsed = dateFor(item, year, false);
         return {
           ...common(item, parsed.date === null && parsed.ambiguous),
           description: item.description ?? null,
