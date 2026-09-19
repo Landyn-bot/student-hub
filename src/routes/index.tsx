@@ -5,18 +5,20 @@ import { Button } from "@/components/ui/app-button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Syllabus — your college operating system" },
+      { title: "Syllo — your college operating system" },
       {
         name: "description",
         content:
-          "Syllabus keeps your courses, assignments, calendar and finances in one calm planner built for students.",
+          "Syllo keeps your courses, assignments, calendar and finances in one calm planner built for students.",
       },
-      { property: "og:title", content: "Syllabus — your college operating system" },
+      { property: "og:title", content: "Syllo — your college operating system" },
       {
         property: "og:description",
         content:
           "Courses, assignments, calendar and finances in one calm planner built for students.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
@@ -31,7 +33,7 @@ function Landing() {
             S
           </span>
           <span className="font-display text-lg font-semibold tracking-tight">
-            Syllabus
+            Syllo
           </span>
         </div>
         <div className="ml-auto">
@@ -88,6 +90,9 @@ function Landing() {
           </div>
         </section>
       </main>
+      <footer className="border-t border-border px-5 py-6 text-center text-xs text-foreground/45 sm:px-8">
+        Syllo · Built for SteelHacks XIII 2026
+      </footer>
     </div>
   );
 }

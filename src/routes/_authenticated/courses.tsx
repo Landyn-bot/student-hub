@@ -10,16 +10,18 @@ import { listCourses } from "@/lib/courses.functions";
 export const Route = createFileRoute("/_authenticated/courses")({
   head: () => ({
     meta: [
-      { title: "Courses — Syllabus" },
+      { title: "Courses — Syllo" },
       {
         name: "description",
         content: "Every subject you carry this term, gathered in one shelf.",
       },
-      { property: "og:title", content: "Courses — Syllabus" },
+      { property: "og:title", content: "Courses — Syllo" },
       {
         property: "og:description",
         content: "Every subject you carry this term, gathered in one shelf.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CoursesPage,

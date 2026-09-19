@@ -7,16 +7,18 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 export const Route = createFileRoute("/_authenticated/assignments")({
   head: () => ({
     meta: [
-      { title: "Assignments — Syllabus" },
+      { title: "Assignments — Syllo" },
       {
         name: "description",
         content: "Every reading, problem set and paper, sorted by what's next.",
       },
-      { property: "og:title", content: "Assignments — Syllabus" },
+      { property: "og:title", content: "Assignments — Syllo" },
       {
         property: "og:description",
         content: "Every reading, problem set and paper, sorted by what's next.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AssignmentsPage,

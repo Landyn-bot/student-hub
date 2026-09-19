@@ -8,17 +8,19 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Syllabus" },
+      { title: "Dashboard — Syllo" },
       {
         name: "description",
         content:
           "Your semester at a glance: upcoming assignments, today's schedule and finances in one place.",
       },
-      { property: "og:title", content: "Dashboard — Syllabus" },
+      { property: "og:title", content: "Dashboard — Syllo" },
       {
         property: "og:description",
         content: "Your semester at a glance, in one calm planner.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: DashboardPage,

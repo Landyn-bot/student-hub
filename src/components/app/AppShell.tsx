@@ -47,7 +47,7 @@ export function AppShell({
               S
             </span>
             <span className="font-display text-lg font-semibold tracking-tight">
-              Syllabus
+              Syllo
             </span>
           </Link>
 
@@ -71,6 +71,9 @@ export function AppShell({
       <div className="mx-auto flex max-w-7xl gap-6 px-5 sm:px-8">
         <aside className="hidden w-56 shrink-0 py-6 lg:block">
           <SidebarNav />
+          <p className="mt-8 border-t border-border pt-4 text-xs leading-relaxed text-foreground/45">
+            Built for SteelHacks XIII · 2026
+          </p>
         </aside>
 
         <main className="min-w-0 flex-1 py-6">{children}</main>
@@ -84,7 +87,7 @@ export function AppShell({
           />
           <div className="absolute inset-y-0 left-0 w-64 bg-card p-5 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <span className="font-display text-lg font-semibold">Syllabus</span>
+              <span className="font-display text-lg font-semibold">Syllo</span>
               <Button
                 variant="ghost"
                 size="icon"

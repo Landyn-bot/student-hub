@@ -12,13 +12,15 @@ import { getProfile, updateProfile } from "@/lib/profile.functions";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Syllabus" },
+      { title: "Settings — Syllo" },
       { name: "description", content: "Your account and planner preferences." },
-      { property: "og:title", content: "Settings — Syllabus" },
+      { property: "og:title", content: "Settings — Syllo" },
       {
         property: "og:description",
         content: "Your account and planner preferences.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: SettingsPage,

@@ -1,8 +1,10 @@
-# Welcome to your Lovable project
+# Syllo
 
-This project was built with [Lovable](https://lovable.dev).
+Syllo is a personal college operating system that brings courses, assignments, calendars, finances, and study tools into one focused workspace.
 
-## Build with Lovable
+Built for SteelHacks XIII 2026 with [Lovable](https://lovable.dev).
+
+## Continue building with Lovable
 
 Open your project in the [Lovable editor](https://lovable.dev) and keep building.
 
