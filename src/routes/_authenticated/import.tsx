@@ -494,6 +494,7 @@ function AttentionPanel() {
   const review = useServerFn(reviewImportedItem);
   const bulk = useServerFn(bulkApproveItems);
   const [pending, setPending] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["attention-items"],
