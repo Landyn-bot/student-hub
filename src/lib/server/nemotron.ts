@@ -137,17 +137,26 @@ async function analyzeChunk(
         chunkId: chunk.id,
         issue: parsed.error.issues[0]?.message ?? "invalid shape",
       });
+      const failure = "The model did not return valid structured JSON for this section.";
       return {
         analysis: {
           ...base,
           status: "failed",
           itemCount: 0,
           latencyMs: Date.now() - startedAt,
-          error: "The model did not return valid structured JSON for this section.",
+          error: failure,
         },
         items: {},
         course: { course_code: null, course_name: null, instructor: null, semester: null },
         model: result.model,
+        trace: {
+          ...traceBase(chunk),
+          status: "failed",
+          latencyMs: Date.now() - startedAt,
+          modelReply: clip(result.text),
+          categories: [],
+          error: failure,
+        },
       };
     }
 
@@ -180,6 +189,15 @@ async function analyzeChunk(
       items,
       course: parsed.data.course,
       model: result.model,
+      trace: {
+        ...traceBase(chunk),
+        status: "ok",
+        latencyMs: Date.now() - startedAt,
+        modelReply: clip(result.text),
+        categories: extractionListKeys
+          .map((key) => ({ key, titles: (items[key] ?? []).map((item) => item.title) }))
+          .filter((entry) => entry.titles.length > 0),
+      },
     };
   } catch (error) {
     const message =
@@ -202,6 +220,14 @@ async function analyzeChunk(
       items: {},
       course: { course_code: null, course_name: null, instructor: null, semester: null },
       model: null,
+      trace: {
+        ...traceBase(chunk),
+        status: "failed",
+        latencyMs: Date.now() - startedAt,
+        modelReply: "",
+        categories: [],
+        error: message,
+      },
     };
   }
 }
