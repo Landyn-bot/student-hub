@@ -180,11 +180,11 @@ export type ExtractionListKey = (typeof extractionListKeys)[number];
 
 export type ExtractedItem = {
   title: string;
-  description?: string | null;
-  date?: string | null;
-  due_date?: string | null;
-  weight?: string | null;
-  confidence?: number;
+  description?: string | null | undefined;
+  date?: string | null | undefined;
+  due_date?: string | null | undefined;
+  weight?: string | null | undefined;
+  confidence?: number | undefined;
   source: ExtractionSource;
 };
 
@@ -198,10 +198,9 @@ export type CourseExtraction = {
 } & Record<ExtractionListKey, ExtractedItem[]>;
 
 export function emptyExtraction(): CourseExtraction {
-  const lists = Object.fromEntries(extractionListKeys.map((key) => [key, []])) as Record<
-    ExtractionListKey,
-    ExtractedItem[]
-  >;
+  const lists = Object.fromEntries(
+    extractionListKeys.map((key) => [key, [] as ExtractedItem[]]),
+  ) as unknown as Record<ExtractionListKey, ExtractedItem[]>;
   return {
     course: { course_code: null, course_name: null, instructor: null, semester: null },
     ...lists,
