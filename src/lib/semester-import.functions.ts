@@ -89,7 +89,10 @@ type Item = z.infer<typeof itemSchema>;
 /** Low-confidence or unreadable timing is surfaced to the student instead of silently kept. */
 const LOW_CONFIDENCE = 0.5;
 
-function reviewFor(item: Item, ambiguousDate: boolean): {
+function reviewFor(
+  item: Item,
+  ambiguousDate: boolean,
+): {
   review_status: "approved" | "needs_attention";
   needs_attention_reason: string | null;
 } {
@@ -315,13 +318,15 @@ export const saveCourseImport = createServerFn({ method: "POST" })
 export const reviewKinds = ["assignment", "exam", "event", "policy"] as const;
 export type ReviewKind = (typeof reviewKinds)[number];
 
-const tableFor: Record<ReviewKind, "assignments" | "exams" | "calendar_events" | "course_policies"> =
-  {
-    assignment: "assignments",
-    exam: "exams",
-    event: "calendar_events",
-    policy: "course_policies",
-  };
+const tableFor: Record<
+  ReviewKind,
+  "assignments" | "exams" | "calendar_events" | "course_policies"
+> = {
+  assignment: "assignments",
+  exam: "exams",
+  event: "calendar_events",
+  policy: "course_policies",
+};
 
 export type AttentionItem = {
   id: string;
@@ -345,22 +350,30 @@ export const listAttentionItems = createServerFn({ method: "GET" })
     const [assignments, exams, events, policies] = await Promise.all([
       supabase
         .from("assignments")
-        .select("id, title, due_date, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)")
+        .select(
+          "id, title, due_date, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)",
+        )
         .eq("user_id", userId)
         .eq("review_status", "needs_attention"),
       supabase
         .from("exams")
-        .select("id, title, exam_date, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)")
+        .select(
+          "id, title, exam_date, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)",
+        )
         .eq("user_id", userId)
         .eq("review_status", "needs_attention"),
       supabase
         .from("calendar_events")
-        .select("id, title, starts_at, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)")
+        .select(
+          "id, title, starts_at, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)",
+        )
         .eq("user_id", userId)
         .eq("review_status", "needs_attention"),
       supabase
         .from("course_policies")
-        .select("id, title, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)")
+        .select(
+          "id, title, needs_attention_reason, ai_confidence, source_text, edited_by_user, course_id, courses(name)",
+        )
         .eq("user_id", userId)
         .eq("review_status", "needs_attention"),
     ]);
@@ -434,7 +447,11 @@ const reviewInputSchema = z.object({
   action: z.enum(["approve", "reject", "edit"]),
   title: z.string().min(1).max(500).optional(),
   /** ISO yyyy-mm-dd, or null to say the date is genuinely unknown. */
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
 });
 
 /**

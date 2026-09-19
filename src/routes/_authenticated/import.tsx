@@ -529,7 +529,10 @@ function AttentionPanel() {
 
   return (
     <Panel>
-      <PanelHeader title="Needs attention" aside={`${items.length} item${items.length === 1 ? "" : "s"}`} />
+      <PanelHeader
+        title="Needs attention"
+        aside={`${items.length} item${items.length === 1 ? "" : "s"}`}
+      />
       <p className="mb-4 text-sm text-foreground/60">
         These are the only items we could not settle on our own. Everything else is already in your
         planner.
@@ -634,7 +637,11 @@ function AttentionRow({
       ) : null}
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="brand" onClick={() => void submit(edited ? "edit" : "approve")} disabled={busy}>
+        <Button
+          variant="brand"
+          onClick={() => void submit(edited ? "edit" : "approve")}
+          disabled={busy}
+        >
           {edited ? "Save and approve" : "Approve"}
         </Button>
         <Button onClick={() => void submit("reject")} disabled={busy}>

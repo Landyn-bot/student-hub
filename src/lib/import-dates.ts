@@ -45,7 +45,10 @@ function monthIndex(name: string): number {
  * Read a date out of free text. `referenceYear` supplies the year when the document omits
  * it (typical for "October 12" in a semester schedule).
  */
-export function parseItemDate(raw: string | null | undefined, referenceYear: number): ParsedItemDate {
+export function parseItemDate(
+  raw: string | null | undefined,
+  referenceYear: number,
+): ParsedItemDate {
   const text = (raw ?? "").trim();
   if (text.length === 0) return { date: null, ambiguous: false };
 
