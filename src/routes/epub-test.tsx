@@ -132,8 +132,8 @@ function EpubTestPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">EPUB → Nemotron pipeline test</h1>
         <p className="text-muted-foreground text-sm">
-          Parse course .epub files in the browser, normalize them, then send the normalized
-          content to Syllo&apos;s own analysis endpoint. Nothing is uploaded or saved.
+          Parse course .epub files in the browser, normalize them, then send the normalized content
+          to Syllo&apos;s own analysis endpoint. Nothing is uploaded or saved.
         </p>
       </header>
 
