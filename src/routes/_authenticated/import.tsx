@@ -597,10 +597,10 @@ function AttentionPanel() {
       </p>
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Button onClick={() => void runBulk("high_confidence_assignments")} disabled={pending}>
+        <Button onClick={() => void runBulk("high_confidence_assignments")} loading={pending}>
           Approve all high-confidence assignments
         </Button>
-        <Button onClick={() => void runBulk("reviewed_items")} disabled={pending}>
+        <Button onClick={() => void runBulk("reviewed_items")} loading={pending}>
           Approve all reviewed items
         </Button>
       </div>
@@ -698,7 +698,7 @@ function AttentionRow({
         <Button
           variant="brand"
           onClick={() => void submit(edited ? "edit" : "approve")}
-          disabled={busy}
+          loading={busy}
         >
           {edited ? "Save and approve" : "Approve"}
         </Button>
