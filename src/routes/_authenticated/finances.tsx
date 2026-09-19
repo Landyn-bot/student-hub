@@ -5,6 +5,7 @@ import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ErrorNote, LoadingRows } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
@@ -67,7 +68,13 @@ function FinancesPage() {
   const runAdd = useServerFn(addTransaction);
   const runDelete = useServerFn(deleteTransaction);
 
-  const { data: transactions = [], isLoading } = useQuery({
+  const {
+    data: transactions = [],
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["finances"],
     queryFn: fetchTransactions,
   });
@@ -149,7 +156,15 @@ function FinancesPage() {
 
       {isLoading ? (
         <Panel>
-          <p className="text-sm text-muted-foreground">Loading your ledger…</p>
+          <LoadingRows rows={4} />
+        </Panel>
+      ) : isError ? (
+        <Panel>
+          <ErrorNote
+            title="We could not load your entries"
+            onRetry={() => void refetch()}
+            retrying={isRefetching}
+          />
         </Panel>
       ) : (
         <div className="space-y-6">
@@ -258,7 +273,7 @@ function FinancesPage() {
                   />
                 </label>
                 {formError ? <p className="text-sm text-accent">{formError}</p> : null}
-                <Button type="submit" disabled={addMutation.isPending}>
+                <Button type="submit" loading={addMutation.isPending}>
                   {addMutation.isPending ? "Saving…" : "Add entry"}
                 </Button>
               </form>

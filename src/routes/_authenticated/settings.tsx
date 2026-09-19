@@ -227,7 +227,7 @@ function SettingsPage() {
               </span>
             </span>
           </label>
-          <Button type="submit" variant="brand" disabled={mutation.isPending}>
+          <Button type="submit" variant="brand" loading={mutation.isPending}>
             {mutation.isPending ? "Saving…" : "Save changes"}
           </Button>
         </form>
