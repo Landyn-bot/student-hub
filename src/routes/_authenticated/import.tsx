@@ -53,13 +53,7 @@ export const Route = createFileRoute("/_authenticated/import")({
  * just because the parser succeeded.
  */
 type ImportStatus =
-  | "selected"
-  | "parsing"
-  | "parsed"
-  | "analyzing"
-  | "ready_for_review"
-  | "completed"
-  | "failed";
+  "selected" | "parsing" | "parsed" | "analyzing" | "ready_for_review" | "completed" | "failed";
 
 type ImportFailure = { code: ImportErrorCode; message: string };
 
@@ -202,7 +196,9 @@ function ImportSemesterPage() {
 
   const addFiles = useCallback(
     (fileList: FileList | File[]) => {
-      const files = Array.from(fileList).filter((file) => file.name.toLowerCase().endsWith(".epub"));
+      const files = Array.from(fileList).filter((file) =>
+        file.name.toLowerCase().endsWith(".epub"),
+      );
       if (files.length === 0) return;
 
       const entries: CourseImport[] = files.map((file) => ({
@@ -287,9 +283,7 @@ function ImportSemesterPage() {
               dragging ? "border-brand bg-brand/5" : "border-border"
             }`}
           >
-            <p className="font-display text-lg text-foreground">
-              Drop your course exports here
-            </p>
+            <p className="font-display text-lg text-foreground">Drop your course exports here</p>
             <p className="mt-1 text-sm text-foreground/55">
               Select as many .epub course files as you like — each one is handled separately.
             </p>
@@ -428,8 +422,8 @@ function ReviewPanel({ items }: { items: CourseImport[] }) {
     <Panel>
       <PanelHeader title="Review what we found" aside="Nothing saved yet" />
       <p className="mb-4 text-sm text-foreground/60">
-        Check each item against the sentence it came from. Anything not stated in your files is
-        left blank rather than guessed.
+        Check each item against the sentence it came from. Anything not stated in your files is left
+        blank rather than guessed.
       </p>
 
       <div className="space-y-6">
@@ -439,9 +433,7 @@ function ReviewPanel({ items }: { items: CourseImport[] }) {
           return (
             <div key={item.importId} className="rounded-2xl border border-border p-4">
               <p className="font-display text-base text-foreground">
-                {extraction.course.course_name ??
-                  item.normalized?.metadata.title ??
-                  item.fileName}
+                {extraction.course.course_name ?? item.normalized?.metadata.title ?? item.fileName}
               </p>
               <p className="text-xs text-foreground/50">
                 {extraction.course.course_code ?? "no course code"} ·{" "}
@@ -465,7 +457,7 @@ function ReviewPanel({ items }: { items: CourseImport[] }) {
                             className="rounded-xl bg-foreground/[0.03] p-2.5 text-sm"
                           >
                             <p className="text-foreground">{entry.title}</p>
-                            {entry.due_date ?? entry.date ? (
+                            {(entry.due_date ?? entry.date) ? (
                               <p className="text-xs text-foreground/55">
                                 {entry.due_date ?? entry.date}
                               </p>
