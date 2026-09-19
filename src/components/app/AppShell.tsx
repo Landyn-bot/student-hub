@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/app-button";
 import { supabase } from "@/integrations/supabase/client";
 
 import { SidebarNav } from "./SidebarNav";

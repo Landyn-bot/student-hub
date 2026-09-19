@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/app/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Panel, PanelHeader } from "@/components/ui/Panel";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 
 export const Route = createFileRoute("/_authenticated/finances")({
   head: () => ({

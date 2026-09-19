@@ -3,8 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
 import { PageHeader } from "@/components/app/PageHeader";
-import { Button } from "@/components/ui/Button";
-import { Panel } from "@/components/ui/Panel";
+import { Button } from "@/components/ui/app-button";
+import { Panel } from "@/components/ui/panel-surface";
 import { listCourses } from "@/lib/courses.functions";
 
 export const Route = createFileRoute("/_authenticated/courses")({

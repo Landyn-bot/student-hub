@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
-import { Button } from "@/components/ui/Button";
-import { Panel, PanelHeader } from "@/components/ui/Panel";
+import { Button } from "@/components/ui/app-button";
+import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { getProfile, updateProfile } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({
