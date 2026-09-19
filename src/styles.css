@@ -45,6 +45,25 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-course-coral: var(--course-coral);
+  --color-course-coral-soft: var(--course-coral-soft);
+  --color-course-coral-ink: var(--course-coral-ink);
+  --color-course-teal: var(--course-teal);
+  --color-course-teal-soft: var(--course-teal-soft);
+  --color-course-teal-ink: var(--course-teal-ink);
+  --color-course-mustard: var(--course-mustard);
+  --color-course-mustard-soft: var(--course-mustard-soft);
+  --color-course-mustard-ink: var(--course-mustard-ink);
+  --color-course-blue: var(--course-blue);
+  --color-course-blue-soft: var(--course-blue-soft);
+  --color-course-blue-ink: var(--course-blue-ink);
+  --color-course-berry: var(--course-berry);
+  --color-course-berry-soft: var(--course-berry-soft);
+  --color-course-berry-ink: var(--course-berry-ink);
+  --color-course-leaf: var(--course-leaf);
+  --color-course-leaf-soft: var(--course-leaf-soft);
+  --color-course-leaf-ink: var(--course-leaf-ink);
 }
 
 :root {
@@ -79,6 +98,26 @@
   --border: oklch(0.888 0.0165 91);
   --input: oklch(0.888 0.0165 91);
   --ring: oklch(0.49 0.052 155);
+
+  /* Color-coded planner tabs. Each trio is an accent, tint and readable ink. */
+  --course-coral: oklch(0.66 0.15 31);
+  --course-coral-soft: oklch(0.94 0.035 31);
+  --course-coral-ink: oklch(0.44 0.13 31);
+  --course-teal: oklch(0.61 0.105 184);
+  --course-teal-soft: oklch(0.94 0.032 184);
+  --course-teal-ink: oklch(0.4 0.085 184);
+  --course-mustard: oklch(0.73 0.13 82);
+  --course-mustard-soft: oklch(0.955 0.044 82);
+  --course-mustard-ink: oklch(0.45 0.1 75);
+  --course-blue: oklch(0.61 0.12 250);
+  --course-blue-soft: oklch(0.94 0.031 250);
+  --course-blue-ink: oklch(0.42 0.11 250);
+  --course-berry: oklch(0.61 0.13 344);
+  --course-berry-soft: oklch(0.95 0.032 344);
+  --course-berry-ink: oklch(0.42 0.115 344);
+  --course-leaf: oklch(0.61 0.11 142);
+  --course-leaf-soft: oklch(0.945 0.035 142);
+  --course-leaf-ink: oklch(0.4 0.09 142);
 }
 
 @layer base {
@@ -103,7 +142,7 @@
 
 @utility panel {
   background-color: var(--color-card);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: 0 0 0 1px oklch(0 0 0 / 5%);
 }
 

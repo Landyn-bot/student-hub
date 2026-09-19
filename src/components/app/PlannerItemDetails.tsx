@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import {
   Dialog,
   DialogContent,
@@ -7,7 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { coursePalette } from "@/lib/course-colors";
 import type { PlannerItem } from "@/lib/planner.functions";
+import { cn } from "@/lib/utils";
 
 export function formatDay(key: string): string {
   return new Date(`${key}T00:00:00`).toLocaleDateString(undefined, {
@@ -17,10 +17,7 @@ export function formatDay(key: string): string {
   });
 }
 
-/**
- * Detail view for one academic item, including where the fact came from in the
- * imported file. Date-only items show the date alone — no time is invented.
- */
+/** Student-facing detail view. Date-only items stay date-only. */
 export function PlannerItemDetails({
   item,
   onClose,
@@ -28,49 +25,58 @@ export function PlannerItemDetails({
   item: PlannerItem | null;
   onClose: () => void;
 }) {
+  const palette = coursePalette(item?.courseId);
+
   return (
     <Dialog open={Boolean(item)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg gap-0 overflow-hidden border-border bg-card p-0 sm:rounded-2xl">
         {item && (
           <>
-            <DialogHeader>
-              <DialogTitle className="font-display">{item.title}</DialogTitle>
-              <DialogDescription>
-                {[item.courseName ?? "No course", item.type].join(" · ")}
-              </DialogDescription>
-            </DialogHeader>
+            <div className={cn("h-2", palette.solid)} />
+            <div className="p-6 sm:p-8">
+              <DialogHeader className="pr-8 text-left">
+                <DialogDescription
+                  className={cn(
+                    "mb-2 w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize",
+                    palette.soft,
+                    palette.text,
+                  )}
+                >
+                  {[item.courseName ?? "No course", item.type].join(" · ")}
+                </DialogDescription>
+                <DialogTitle className="font-display text-2xl leading-tight text-foreground">
+                  {item.title}
+                </DialogTitle>
+              </DialogHeader>
 
-            <dl className="space-y-3 text-sm">
-              <Detail label="When">
-                {item.date ? formatDay(item.date) : "No date found"}
-                {item.time ? ` · ${item.time}` : ""}
-              </Detail>
-              {item.location && <Detail label="Where">{item.location}</Detail>}
-              {item.description && <Detail label="Details">{item.description}</Detail>}
-              {item.sourceName && <Detail label="From file">{item.sourceName}</Detail>}
-              {item.sourceText && (
-                <Detail label="Original wording">
-                  <span className="italic text-foreground/70">“{item.sourceText}”</span>
-                </Detail>
-              )}
-              {item.aiGenerated && (
-                <p className="text-xs text-foreground/50">
-                  Read automatically from your uploaded course file.
-                </p>
-              )}
-            </dl>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className={cn("rounded-xl p-4", palette.soft)}>
+                  <p className={cn("text-xs font-semibold uppercase", palette.text)}>Due</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    {item.date ? formatDay(item.date) : "No date found"}
+                    {item.time ? ` at ${item.time}` : ""}
+                  </p>
+                </div>
+                {item.location ? (
+                  <div className="rounded-xl bg-secondary p-4">
+                    <p className="text-xs font-semibold uppercase text-foreground/45">Location</p>
+                    <p className="mt-1 text-sm font-medium text-foreground">{item.location}</p>
+                  </div>
+                ) : null}
+              </div>
+
+              {item.description ? (
+                <div className="mt-6">
+                  <h3 className="text-xs font-semibold uppercase text-foreground/45">Details</h3>
+                  <p className="mt-2 text-pretty text-sm leading-relaxed text-foreground/75">
+                    {item.description}
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </>
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Detail({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[11px] uppercase tracking-[0.12em] text-foreground/45">{label}</dt>
-      <dd className="mt-0.5 text-pretty text-foreground/80">{children}</dd>
-    </div>
   );
 }

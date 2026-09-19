@@ -9,7 +9,9 @@ import { PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { Button } from "@/components/ui/app-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
+import { coursePalette } from "@/lib/course-colors";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -114,6 +116,10 @@ function CalendarPage() {
             variant={courseFilter === course.id ? "accent" : "soft"}
             onClick={() => setCourseFilter(courseFilter === course.id ? null : course.id)}
           >
+            <span
+              className={cn("size-2 rounded-full", coursePalette(course.id).solid)}
+              aria-hidden
+            />
             {course.courseCode ?? course.name}
           </Button>
         ))}
@@ -247,7 +253,13 @@ function MonthView({
                     <button
                       type="button"
                       onClick={() => onOpen(item)}
-                      className="block w-full truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-left text-[11px] text-foreground/80 hover:bg-primary/15"
+                      className={cn(
+                        "block w-full truncate rounded-md border-l-2 px-1.5 py-0.5 text-left text-[11px] font-medium transition",
+                        coursePalette(item.courseId).soft,
+                        coursePalette(item.courseId).text,
+                        coursePalette(item.courseId).border,
+                        coursePalette(item.courseId).hover,
+                      )}
                     >
                       {item.title}
                     </button>
@@ -294,19 +306,36 @@ function AgendaView({
                   <button
                     type="button"
                     onClick={() => onOpen(item)}
-                    className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
+                    className={cn(
+                      "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+                      coursePalette(item.courseId).hover,
+                    )}
                   >
-                    <span className="min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        "w-1.5 shrink-0 self-stretch",
+                        coursePalette(item.courseId).solid,
+                      )}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 py-3">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
                       </span>
-                      <span className="mt-0.5 block truncate text-xs text-foreground/55">
+                      <span
+                        className={cn(
+                          "mt-0.5 block truncate text-xs font-medium",
+                          coursePalette(item.courseId).text,
+                        )}
+                      >
                         {[item.courseName ?? "No course", item.type].join(" · ")}
                       </span>
                     </span>
                     {/* Date-only items stay date-only; a time shows only when the source had one. */}
                     {item.time && (
-                      <span className="shrink-0 text-xs text-foreground/60">{item.time}</span>
+                      <span className="shrink-0 self-center pr-3 text-xs text-foreground/60">
+                        {item.time}
+                      </span>
                     )}
                   </button>
                 </li>

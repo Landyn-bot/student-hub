@@ -7,6 +7,8 @@ import { ErrorNote, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { Panel } from "@/components/ui/panel-surface";
 import { listCourses } from "@/lib/courses.functions";
+import { coursePalette } from "@/lib/course-colors";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/courses")({
   head: () => ({
@@ -70,17 +72,21 @@ function CoursesPage() {
         </Panel>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {courses.map((course) => (
-            <Panel key={course.id}>
-              <h2 className="font-display text-lg font-semibold">{course.name}</h2>
-              <p className="mt-1 text-sm text-foreground/55">
-                {course.course_code ?? "No course code"}
-              </p>
-              {course.instructor ? (
-                <p className="mt-2 text-sm text-foreground/60">{course.instructor}</p>
-              ) : null}
-            </Panel>
-          ))}
+          {courses.map((course) => {
+            const palette = coursePalette(course.id);
+            return (
+              <Panel key={course.id} className={cn("overflow-hidden border-l-4", palette.border)}>
+                <span className={cn("mb-4 block size-3 rounded-full", palette.solid)} aria-hidden />
+                <h2 className="font-display text-lg font-semibold">{course.name}</h2>
+                <p className="mt-1 text-sm text-foreground/55">
+                  {course.course_code ?? "No course code"}
+                </p>
+                {course.instructor ? (
+                  <p className="mt-2 text-sm text-foreground/60">{course.instructor}</p>
+                ) : null}
+              </Panel>
+            );
+          })}
         </div>
       )}
     </>

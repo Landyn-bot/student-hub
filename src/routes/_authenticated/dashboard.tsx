@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/app-button";
 import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
+import { coursePalette } from "@/lib/course-colors";
 import { getFocusPlan, type FocusItem } from "@/lib/focus.functions";
 import { getOnboardingState } from "@/lib/onboarding.functions";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
+import { cn } from "@/lib/utils";
 
 /** "Due tomorrow", "Due Friday", "2 days past due" — never invented, always from the stored date. */
 function dueLabel(item: FocusItem): string {
@@ -167,24 +169,36 @@ function DashboardPage() {
           <ul className="space-y-2">
             {focus?.items.map((item) => {
               const match = planner?.items.find((entry) => entry.id === item.id) ?? null;
+              const palette = coursePalette(match?.courseId);
               return (
                 <li key={item.id}>
                   <button
                     type="button"
                     onClick={() => match && setSelected(match)}
-                    className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
+                    className={cn(
+                      "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+                      palette.hover,
+                    )}
                   >
-                    <span className="min-w-0 flex-1">
+                    <span
+                      className={cn("w-1.5 shrink-0 self-stretch", palette.solid)}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 py-3">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
                       </span>
-                      <span className="mt-0.5 block truncate text-xs text-foreground/55">
+                      <span
+                        className={cn("mt-0.5 block truncate text-xs font-medium", palette.text)}
+                      >
                         {[item.courseName ?? "No course", dueLabel(item)].join(" · ")}
                       </span>
                       <span className="mt-1 block text-xs text-foreground/60">{item.reason}</span>
                     </span>
                     {item.overdue ? (
-                      <span className="shrink-0 text-xs text-accent">Overdue</span>
+                      <span className="shrink-0 self-center rounded-full bg-accent/15 px-2 py-1 text-xs text-accent">
+                        Overdue
+                      </span>
                     ) : null}
                   </button>
                 </li>
@@ -288,20 +302,33 @@ function DashboardPage() {
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.map((course) => (
-              <div key={course.id} className="inset-tile bg-background p-4">
-                <p className="font-display text-base font-semibold text-foreground">
-                  {course.name}
-                </p>
-                <p className="mt-1 text-xs text-foreground/55">
-                  {course.courseCode ?? course.instructor ?? "Imported course"}
-                </p>
-                <p className="mt-3 text-sm text-foreground/70">
-                  {groups.perCourse.get(course.id) ?? 0} upcoming item
-                  {(groups.perCourse.get(course.id) ?? 0) === 1 ? "" : "s"}
-                </p>
-              </div>
-            ))}
+            {courses.map((course) => {
+              const palette = coursePalette(course.id);
+              return (
+                <div
+                  key={course.id}
+                  className={cn(
+                    "inset-tile overflow-hidden border-l-4 bg-background p-4",
+                    palette.border,
+                  )}
+                >
+                  <span
+                    className={cn("mb-3 block size-3 rounded-full", palette.solid)}
+                    aria-hidden
+                  />
+                  <p className="font-display text-base font-semibold text-foreground">
+                    {course.name}
+                  </p>
+                  <p className="mt-1 text-xs text-foreground/55">
+                    {course.courseCode ?? course.instructor ?? "Imported course"}
+                  </p>
+                  <p className="mt-3 text-sm text-foreground/70">
+                    {groups.perCourse.get(course.id) ?? 0} upcoming item
+                    {(groups.perCourse.get(course.id) ?? 0) === 1 ? "" : "s"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
       </Panel>
@@ -321,17 +348,23 @@ function ItemRow({
   onOpen: (item: PlannerItem) => void;
   showDate?: boolean;
 }) {
+  const palette = coursePalette(item.courseId);
+
   return (
     <li>
       <button
         type="button"
         onClick={() => onOpen(item)}
-        className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
+        className={cn(
+          "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+          palette.hover,
+        )}
       >
+        <span className={cn("w-1.5 shrink-0 self-stretch", palette.solid)} aria-hidden />
         {/* flex-1 keeps the text column bounded so the truncation below can take effect. */}
-        <span className="min-w-0 flex-1">
+        <span className="min-w-0 flex-1 py-3">
           <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>
-          <span className="mt-0.5 block truncate text-xs text-foreground/55">
+          <span className={cn("mt-0.5 block truncate text-xs font-medium", palette.text)}>
             {[item.courseName ?? "No course", item.type].join(" · ")}
           </span>
           {item.description && (
@@ -340,7 +373,7 @@ function ItemRow({
             </span>
           )}
         </span>
-        <span className="shrink-0 text-right text-xs text-foreground/60">
+        <span className="shrink-0 py-3 pr-3 text-right text-xs text-foreground/60">
           {showDate && item.date ? formatDay(item.date) : null}
           {item.time ? <span className="block">{item.time}</span> : null}
         </span>
