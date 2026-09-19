@@ -98,11 +98,7 @@ function AssistantPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="AI Assistant"
-        title="Ask about your own courses."
-        description="Answers come only from the syllabi and files you imported — never invented."
-      />
+      <PageHeader eyebrow="AI Assistant" title="Ask about your own courses." />
 
       <div className="flex h-[calc(100vh-16rem)] min-h-96 flex-col gap-4">
         <Conversation className="flex-1 rounded-3xl border border-border bg-card">
