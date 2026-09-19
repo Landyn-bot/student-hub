@@ -194,8 +194,8 @@ function DashboardPage() {
         )}
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel>
+      <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+        <Panel className="min-w-0">
           <PanelHeader
             title="Today"
             aside={groups.dueToday.length > 0 ? `${groups.dueToday.length} due` : undefined}
@@ -222,7 +222,7 @@ function DashboardPage() {
           )}
         </Panel>
 
-        <Panel>
+        <Panel className="min-w-0">
           <PanelHeader
             title="Upcoming"
             aside={groups.upcoming.length > 0 ? `${groups.upcoming.length} items` : undefined}
