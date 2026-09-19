@@ -18,7 +18,9 @@ export const getProfile = createServerFn({ method: "GET" })
       .eq("id", context.userId)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
     return data;
   });
 
@@ -31,18 +33,19 @@ export const updateProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => profileInput.parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: context.userId,
-          full_name: data.full_name,
-          school: data.school,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" },
-      );
+    // The authenticated account ID is always the profile owner.
+    const { error } = await context.supabase.from("profiles").upsert(
+      {
+        id: context.userId,
+        full_name: data.full_name,
+        school: data.school,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
     return { ok: true };
   });

@@ -14,12 +14,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "inset-tile bg-background p-6 text-center sm:p-8",
-        className,
-      )}
-    >
+    <div className={cn("inset-tile bg-background p-6 text-center sm:p-8", className)}>
       <p className="font-display text-base font-medium text-foreground">{title}</p>
       <p className="mx-auto mt-1 max-w-[40ch] text-pretty text-sm text-foreground/55">
         {description}

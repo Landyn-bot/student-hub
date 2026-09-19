@@ -13,8 +13,7 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — Syllo" },
       {
         name: "description",
-        content:
-          "Sign in to Syllo, the calm planner for your whole semester.",
+        content: "Sign in to Syllo, the calm planner for your whole semester.",
       },
       { property: "og:title", content: "Sign in — Syllo" },
       {
@@ -40,8 +39,11 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // Send returning students directly to their workspace.
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) {
+        navigate({ to: "/dashboard", replace: true });
+      }
     });
   }, [navigate]);
 
@@ -68,9 +70,7 @@ function AuthPage() {
       }
       navigate({ to: "/dashboard", replace: true });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Something went wrong",
-      );
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -84,7 +84,9 @@ function AuthPage() {
       toast.error("Google sign-in failed");
       return;
     }
-    if (result.redirected) return;
+    if (result.redirected) {
+      return;
+    }
     navigate({ to: "/dashboard", replace: true });
   }
 
@@ -95,9 +97,7 @@ function AuthPage() {
           <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
             S
           </span>
-          <span className="font-display text-lg font-semibold tracking-tight">
-            Syllo
-          </span>
+          <span className="font-display text-lg font-semibold tracking-tight">Syllo</span>
         </Link>
       </header>
 
@@ -142,26 +142,14 @@ function AuthPage() {
                 type="password"
                 required
                 minLength={8}
-                autoComplete={
-                  mode === "signin" ? "current-password" : "new-password"
-                }
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
             </label>
 
-            <Button
-              type="submit"
-              variant="brand"
-              size="lg"
-              className="w-full"
-              disabled={busy}
-            >
-              {busy
-                ? "One moment…"
-                : mode === "signin"
-                  ? "Sign in"
-                  : "Create account"}
+            <Button type="submit" variant="brand" size="lg" className="w-full" disabled={busy}>
+              {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
             </Button>
           </form>
 
@@ -171,24 +159,21 @@ function AuthPage() {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={handleGoogle}
-          >
+          <Button variant="outline" size="lg" className="w-full" onClick={handleGoogle}>
             Continue with Google
           </Button>
 
           <p className="mt-6 text-center text-sm text-foreground/55">
             {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               className="font-medium text-primary underline-offset-4 hover:underline"
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             >
               {mode === "signin" ? "Create an account" : "Sign in"}
-            </button>
+            </Button>
           </p>
         </div>
       </main>

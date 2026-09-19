@@ -83,9 +83,7 @@ function DashboardPage() {
           <div className="inset-tile bg-background p-5">
             <div className="flex items-baseline justify-between">
               <span className="text-sm text-foreground/55">Monthly budget</span>
-              <span className="font-display text-2xl font-semibold text-foreground">
-                $0
-              </span>
+              <span className="font-display text-2xl font-semibold text-foreground">$0</span>
             </div>
             <div className="mt-3 h-2 rounded-full bg-border/60" />
             <p className="mt-3 text-pretty text-sm text-foreground/55">
