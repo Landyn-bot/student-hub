@@ -55,6 +55,7 @@ function SettingsPage() {
   const [weekStartsOn, setWeekStartsOn] = useState(1);
   const [reminderHours, setReminderHours] = useState<0 | 12 | 24 | 48 | 72>(24);
   const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
+  const [emailReminders, setEmailReminders] = useState(true);
 
   const { data: onboarding } = useQuery({
     queryKey: ["onboarding"],
@@ -77,6 +78,7 @@ function SettingsPage() {
     setWeekStartsOn(onboarding.preferences.week_starts_on);
     setReminderHours(onboarding.preferences.default_reminder_hours as 0 | 12 | 24 | 48 | 72);
     setPlanningStyle(onboarding.preferences.planning_style);
+    setEmailReminders(onboarding.preferences.email_reminders);
   }, [onboarding]);
 
   const mutation = useMutation({
@@ -93,6 +95,7 @@ function SettingsPage() {
           week_starts_on: weekStartsOn,
           default_reminder_hours: reminderHours,
           planning_style: planningStyle,
+          email_reminders: emailReminders,
         },
       });
     },
@@ -198,14 +201,31 @@ function SettingsPage() {
               </select>
             </label>
           </div>
-          <label className="block text-sm text-foreground/70">
+          <div className="block text-sm text-foreground/70">
             School
-            <input
+            <SchoolField
               className={fieldClass}
               value={school}
-              onChange={(event) => setSchool(event.target.value)}
+              onChange={setSchool}
               placeholder="Where you study"
             />
+          </div>
+          <label className="flex items-start gap-3 text-sm text-foreground/70">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 accent-[hsl(var(--primary))]"
+              checked={emailReminders}
+              onChange={(event) => setEmailReminders(event.target.checked)}
+              disabled={reminderHours === 0}
+            />
+            <span>
+              Email me my reminders
+              <span className="mt-1 block text-xs text-foreground/45">
+                {reminderHours === 0
+                  ? "Pick a reminder time above to receive emails."
+                  : `Sent to ${onboarding?.reminder_email ?? "your account email"} before each due date.`}
+              </span>
+            </span>
           </label>
           <Button type="submit" variant="brand" disabled={mutation.isPending}>
             {mutation.isPending ? "Saving…" : "Save changes"}
