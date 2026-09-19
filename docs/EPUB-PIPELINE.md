@@ -48,7 +48,7 @@ Parse `container.xml` and the OPF package with hardened XML settings. DTDs, enti
 
 Resolve exactly one supported OPF rootfile. Validate its package version, namespaces, metadata, unique manifest IDs, local manifest references, spine order, and essential spine references. Broken essential references fail the import rather than silently producing incomplete content.
 
-Read readable XHTML/HTML members in spine order and then other readable manifest documents outside the spine. Do not assume names such as `syllabus.html`, and do not treat navigation-only pages as evidence of assignments or deadlines. Record skipped binary attachments and unsupported content as warnings when the import remains usable.
+Read readable XHTML/HTML members in OPF spine order. Do not automatically append every readable manifest document outside the spine because that can duplicate content. Do not assume names such as `syllabus.html`, and do not treat navigation-only pages as evidence of assignments or deadlines. A missing or unusable spine fails clearly rather than triggering complex manifest-discovery heuristics. Record skipped binary attachments and unsupported content as warnings when the import remains usable.
 
 ## XHTML and HTML Extraction
 
@@ -155,8 +155,8 @@ The initial hackathon limits are hard safety limits, not user-configurable form 
 | Individual uncompressed entry | 8 MiB |
 | Compression ratio | Reject above 100:1 for nonempty entries |
 | XML metadata file | 1 MiB; nesting at most 64; at most 10,000 elements; text node at most 64 KiB |
-| Normalized content | 160,000 Unicode characters per import |
-| Chunks | At most 25 per import, at most 8,000 characters each |
+| Normalized content | 400,000 Unicode characters per import |
+| Chunks | At most 100 per import, at most 8,000 characters each |
 | Archive path | At most 1,024 characters |
 | Displayed filename | At most 200 characters |
 
@@ -179,7 +179,7 @@ Unsupported binary attachments, skipped media, and low-information navigation pa
 
 Use original synthetic fixtures and small adversarial archives. Tests must cover:
 
-- Valid EPUB 2 and EPUB 3 packages, namespace variations, relative OPF paths, and readable HTML outside the spine.
+- Valid EPUB 2 and EPUB 3 packages, namespace variations, relative OPF paths, and multiple spine documents in reading order.
 - Tables, lists, headings, non-ASCII text, missing years, and exact source-offset preservation.
 - Traversal names, NULs, backslashes, duplicate/case-colliding names, symlinks, device entries, encrypted archives, unsupported compression, corrupt CRCs, and zip-bomb limits.
 - DTD/XXE/entity declarations, malformed XML, external references, missing packages, ambiguous rootfiles, and broken spine references.
