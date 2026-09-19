@@ -32,9 +32,6 @@ const HISTORY_TURNS = 8;
 const MAX_CONTEXT_ITEMS = 80;
 
 type ConversationRow = { id: string; title: string };
-type Db = Parameters<Parameters<ReturnType<typeof createServerFn>["handler"]>[0]>[0] extends never
-  ? never
-  : never;
 
 /** Finds the student's single ongoing conversation, creating it on first use. */
 async function getOrCreateConversation(
@@ -281,11 +278,7 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     await supabase
       .from("chat_conversations")
-      .update({
-        last_message_at: new Date().toISOString(),
-        // First question doubles as the conversation title.
-        ...(conversation.title === "Syllo assistant" ? {} : {}),
-      })
+      .update({ last_message_at: new Date().toISOString(), model })
       .eq("id", conversation.id)
       .eq("user_id", userId);
 
