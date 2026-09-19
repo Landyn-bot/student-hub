@@ -12,12 +12,14 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { SchoolField } from "@/components/app/SchoolField";
 import { Button } from "@/components/ui/app-button";
 import {
   completeOnboarding,
   getOnboardingState,
   type PlanningStyle,
 } from "@/lib/onboarding.functions";
+import { guessCurrentSemester } from "@/lib/semester";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
