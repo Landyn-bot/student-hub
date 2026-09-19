@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ErrorNote, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { Panel } from "@/components/ui/panel-surface";
 import { listCourses } from "@/lib/courses.functions";
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/courses")({
 
 function CoursesPage() {
   const fetchCourses = useServerFn(listCourses);
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError, refetch, isRefetching } = useQuery({
     queryKey: ["courses"],
     queryFn: () => fetchCourses(),
   });
@@ -41,8 +42,14 @@ function CoursesPage() {
       <PageHeader eyebrow="Courses" title="Your course shelf." />
 
       {isPending ? (
+        <LoadingTiles />
+      ) : isError ? (
         <Panel>
-          <p className="text-sm text-foreground/50">Loading your courses…</p>
+          <ErrorNote
+            title="We could not load your courses"
+            onRetry={() => void refetch()}
+            retrying={isRefetching}
+          />
         </Panel>
       ) : courses.length === 0 ? (
         <Panel className="p-6 sm:p-8">
@@ -50,16 +57,14 @@ function CoursesPage() {
             <div className="sm:max-w-xs">
               <h2 className="mb-2 font-display text-2xl font-semibold text-foreground">Courses</h2>
               <p className="text-pretty text-sm leading-relaxed text-foreground/60">
-                This is the home of every subject you carry this term. Right now it is an open shelf
-                — once importing is switched on, your courses, syllabi and deadlines settle into
-                place.
+                This is the home of every subject you carry this term. Upload your course exports
+                and your courses, syllabi and deadlines settle into place here.
               </p>
             </div>
             <div className="w-full sm:ml-auto sm:w-auto">
-              <Button variant="brand" className="w-full sm:w-auto" disabled>
-                Connect your courses
+              <Button variant="brand" className="w-full sm:w-auto" asChild>
+                <Link to="/import">Upload your courses</Link>
               </Button>
-              <p className="mt-2 text-xs text-foreground/40">Coming soon</p>
             </div>
           </div>
         </Panel>
