@@ -10,10 +10,11 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
+import { Button } from "@/components/ui/app-button";
+import { supabase } from "@/integrations/supabase/client";
+import { reportLovableError } from "@/lib/lovable-error-reporting";
+
 import appCss from "../styles.css?url";
-import { Button } from "../components/ui/app-button";
-import { supabase } from "../integrations/supabase/client";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
