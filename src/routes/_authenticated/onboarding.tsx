@@ -206,18 +206,18 @@ function OnboardingPage() {
             </div>
 
             {step === 0 ? (
-              <label className="block max-w-lg text-sm font-medium text-foreground/75">
+              <div className="block max-w-lg text-sm font-medium text-foreground/75">
                 School or university
-                <input
+                <SchoolField
                   autoFocus
                   className={fieldClass}
                   value={school}
-                  onChange={(event) => setSchool(event.target.value)}
-                  placeholder="University of Pittsburgh"
-                  maxLength={160}
-                  autoComplete="organization"
+                  onChange={setSchool}
                 />
-              </label>
+                <p className="mt-2 text-xs font-normal text-foreground/45">
+                  Start typing to search U.S. colleges and universities.
+                </p>
+              </div>
             ) : null}
 
             {step === 1 ? (
