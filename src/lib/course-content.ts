@@ -218,6 +218,28 @@ export type ChunkAnalysis = {
   error?: string;
 };
 
+/**
+ * Developer-facing record of one semantic interpretation step: the deterministic text that
+ * went in, the model's own reply, and the categories it produced. Used by the debug view to
+ * show exactly where the model sits in the pipeline. It carries no vendor or key details.
+ */
+export type ChunkTrace = {
+  chunkId: string;
+  chapterIndex: number;
+  chapterTitle: string;
+  part: number;
+  totalParts: number;
+  status: "ok" | "failed";
+  latencyMs: number;
+  /** Text handed to the model, exactly as the deterministic parser produced it. */
+  sourceText: string;
+  /** The model's raw reply, truncated for transport. */
+  modelReply: string;
+  /** Validated categories, after Syllo's own schema check. */
+  categories: { key: ExtractionListKey; titles: string[] }[];
+  error?: string;
+};
+
 export type AnalyzeCourseContentResponse =
   | {
       ok: true;
@@ -225,6 +247,7 @@ export type AnalyzeCourseContentResponse =
       model: string;
       extraction: CourseExtraction;
       chunkResults: ChunkAnalysis[];
+      trace: ChunkTrace[];
       chunksAnalyzed: number;
       chunksFailed: number;
       latencyMs: number;

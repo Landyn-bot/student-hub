@@ -74,6 +74,19 @@ const saveInputSchema = z.object({
 
 export type SaveCourseImportInput = z.input<typeof saveInputSchema>;
 
+/**
+ * What happened to one extracted item once it met the data already stored. Returned so the
+ * developer debug view can show the final structured result beside the interpretation.
+ */
+export type SaveDecision = {
+  kind: ReviewKind;
+  title: string;
+  action: "insert" | "merge" | "supersede" | "attention";
+  date: string | null;
+  detail: string;
+  sourceText: string;
+};
+
 export type SaveCourseImportResult =
   | {
       ok: true;
@@ -87,6 +100,7 @@ export type SaveCourseImportResult =
       /** Disagreements the system settled on its own from the source wording. */
       autoResolved: number;
       needsAttention: number;
+      decisions: SaveDecision[];
     }
   | { ok: false; error: string };
 
@@ -412,6 +426,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
       let examsSaved = 0;
       let mergedCount = 0;
       let resolvedCount = 0;
+      const decisions: SaveDecision[] = [];
 
       const logConflict = async (entry: {
         kind: Kind;
@@ -451,6 +466,21 @@ export const saveCourseImport = createServerFn({ method: "POST" })
           known[candidate.kind],
           budget,
         );
+
+        // Record what the reconciliation decided, before acting on it.
+        decisions.push({
+          kind: candidate.kind,
+          title: candidate.item.title,
+          action: decision.kind === "attention" ? "attention" : decision.kind,
+          date: candidate.date,
+          detail:
+            decision.kind === "insert"
+              ? "New to this course — saved."
+              : decision.kind === "attention"
+                ? `${decision.reason}: ${decision.detail}`
+                : decision.detail,
+          sourceText: candidate.item.source.sourceText,
+        });
 
         if (decision.kind === "insert") {
           const review = reviewFor(candidate.item, candidate.ambiguous);
@@ -589,6 +619,7 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         merged: mergedCount,
         autoResolved: resolvedCount,
         needsAttention,
+        decisions,
       };
     } catch (error) {
       console.error("[semester-import] save failed", {

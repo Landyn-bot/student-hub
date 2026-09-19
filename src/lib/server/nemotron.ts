@@ -14,6 +14,7 @@ import {
   extractionListKeys,
   modelExtractionSchema,
   type ChunkAnalysis,
+  type ChunkTrace,
   type CourseContentChunk,
   type CourseContentPayload,
   type CourseExtraction,
@@ -80,7 +81,30 @@ type ChunkOutcome = {
   items: Partial<Record<(typeof extractionListKeys)[number], ExtractedItem[]>>;
   course: CourseExtraction["course"];
   model: string | null;
+  trace: ChunkTrace;
 };
+
+/** Keep the debug trace small enough to travel back to the browser comfortably. */
+const TRACE_TEXT_LIMIT = 4000;
+
+function clip(text: string, limit = TRACE_TEXT_LIMIT): string {
+  return text.length > limit
+    ? `${text.slice(0, limit)}\n… (${text.length - limit} more chars)`
+    : text;
+}
+
+function traceBase(
+  chunk: CourseContentChunk,
+): Omit<ChunkTrace, "status" | "latencyMs" | "modelReply" | "categories"> {
+  return {
+    chunkId: chunk.id,
+    chapterIndex: chunk.chapterIndex,
+    chapterTitle: chunk.chapterTitle,
+    part: chunk.part,
+    totalParts: chunk.totalParts,
+    sourceText: clip(chunk.text),
+  };
+}
 
 /** Analyse a single chunk and validate the model's JSON against the extraction schema. */
 async function analyzeChunk(
@@ -115,17 +139,26 @@ async function analyzeChunk(
         chunkId: chunk.id,
         issue: parsed.error.issues[0]?.message ?? "invalid shape",
       });
+      const failure = "The model did not return valid structured JSON for this section.";
       return {
         analysis: {
           ...base,
           status: "failed",
           itemCount: 0,
           latencyMs: Date.now() - startedAt,
-          error: "The model did not return valid structured JSON for this section.",
+          error: failure,
         },
         items: {},
         course: { course_code: null, course_name: null, instructor: null, semester: null },
         model: result.model,
+        trace: {
+          ...traceBase(chunk),
+          status: "failed",
+          latencyMs: Date.now() - startedAt,
+          modelReply: clip(result.text),
+          categories: [],
+          error: failure,
+        },
       };
     }
 
@@ -158,6 +191,15 @@ async function analyzeChunk(
       items,
       course: parsed.data.course,
       model: result.model,
+      trace: {
+        ...traceBase(chunk),
+        status: "ok",
+        latencyMs: Date.now() - startedAt,
+        modelReply: clip(result.text),
+        categories: extractionListKeys
+          .map((key) => ({ key, titles: (items[key] ?? []).map((item) => item.title) }))
+          .filter((entry) => entry.titles.length > 0),
+      },
     };
   } catch (error) {
     const message =
@@ -180,6 +222,14 @@ async function analyzeChunk(
       items: {},
       course: { course_code: null, course_name: null, instructor: null, semester: null },
       model: null,
+      trace: {
+        ...traceBase(chunk),
+        status: "failed",
+        latencyMs: Date.now() - startedAt,
+        modelReply: "",
+        categories: [],
+        error: message,
+      },
     };
   }
 }
@@ -188,6 +238,8 @@ export type ExtractionRun = {
   model: string;
   extraction: CourseExtraction;
   chunkResults: ChunkAnalysis[];
+  /** One entry per semantic interpretation step, for the developer debug view. */
+  trace: ChunkTrace[];
   chunksAnalyzed: number;
   chunksFailed: number;
 };
@@ -228,6 +280,7 @@ export async function extractCourseContent(payload: CourseContentPayload): Promi
     model,
     extraction,
     chunkResults,
+    trace: outcomes.map((outcome) => outcome.trace),
     chunksAnalyzed: chunkResults.length - chunksFailed,
     chunksFailed,
   };

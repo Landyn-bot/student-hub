@@ -2,7 +2,7 @@
 // exports into Syllo. Each .epub is uploaded, parsed, analysed, organized and saved end to
 // end, without asking the student to approve every extracted item. Only genuinely unresolved
 // items (unreadable dates, low confidence) are surfaced afterwards.
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
@@ -11,7 +11,8 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
-import type { CourseExtraction } from "@/lib/course-content";
+import type { ChunkTrace, CourseExtraction } from "@/lib/course-content";
+import { recordImportRun } from "@/lib/import-store";
 import {
   CourseImportError,
   createImportId,
@@ -171,6 +172,7 @@ function ImportSemesterPage() {
 
       patch(entry.importId, { status: "analyzing" });
       let extraction: CourseExtraction;
+      let trace: ChunkTrace[] = [];
       try {
         const result = await analyze({ data: toAnalysisPayload(normalized) });
         if (!result.ok) {
@@ -181,6 +183,7 @@ function ImportSemesterPage() {
           return;
         }
         extraction = result.extraction;
+        trace = result.trace;
         patch(entry.importId, { extraction });
       } catch (error) {
         console.error("[import] analysis request failed", error);
@@ -224,6 +227,18 @@ function ImportSemesterPage() {
           itemsSaved: saved.itemsSaved,
           examsSaved: saved.examsSaved,
           needsAttention: saved.needsAttention,
+        });
+        // Keep the pipeline trace for the developer view (session memory only).
+        recordImportRun({
+          importId: entry.importId,
+          sourceName: entry.fileName,
+          courseName: saved.courseName,
+          finishedAt: Date.now(),
+          chapters: normalized.chapters.length,
+          chunks: normalized.chunks.length,
+          trace,
+          extraction,
+          decisions: saved.decisions,
         });
         void queryClient.invalidateQueries({ queryKey: ["attention-items"] });
         void queryClient.invalidateQueries({ queryKey: ["courses"] });
@@ -428,6 +443,12 @@ function FinishedSummary({ summary }: { summary: Summary }) {
           file again” above.
         </p>
       ) : null}
+      <Link
+        to="/import-debug"
+        className="mt-3 inline-block text-xs text-foreground/40 underline underline-offset-4 hover:text-foreground/70"
+      >
+        Developer view
+      </Link>
     </Panel>
   );
 }
