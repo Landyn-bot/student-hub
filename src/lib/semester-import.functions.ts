@@ -80,11 +80,26 @@ export type SaveCourseImportResult =
       documentId: string;
       itemsSaved: number;
       examsSaved: number;
+      /** Repeats of something already stored, folded into the existing item. */
+      merged: number;
+      /** Disagreements the system settled on its own from the source wording. */
+      autoResolved: number;
       needsAttention: number;
     }
   | { ok: false; error: string };
 
 type Item = z.infer<typeof itemSchema>;
+
+/** The four kinds of academic row an import can produce. */
+type Kind = ReviewKind;
+
+/** The date column belonging to each kind; policies carry no date. */
+function dateUpdate(kind: Kind, date: string): Record<string, string> {
+  if (kind === "assignment") return { due_date: date };
+  if (kind === "exam") return { exam_date: date };
+  if (kind === "event") return { starts_at: `${date}T00:00:00Z` };
+  return {};
+}
 
 /** Low-confidence or unreadable timing is surfaced to the student instead of silently kept. */
 const LOW_CONFIDENCE = 0.5;
