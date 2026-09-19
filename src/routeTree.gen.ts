@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedAssignmentsRouteImport } from './routes/_authenticated/assignments'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated/courses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFinancesRouteImport } from './routes/_authenticated/finances'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,6 +26,22 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAssignmentsRoute =
+  AuthenticatedAssignmentsRouteImport.update({
+    id: '/assignments',
+    path: '/assignments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCoursesRoute = AuthenticatedCoursesRouteImport.update({
   id: '/courses',
@@ -33,35 +53,70 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFinancesRoute = AuthenticatedFinancesRouteImport.update({
+  id: '/finances',
+  path: '/finances',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assignments': typeof AuthenticatedAssignmentsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/finances': typeof AuthenticatedFinancesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assignments': typeof AuthenticatedAssignmentsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/finances': typeof AuthenticatedFinancesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/assignments': typeof AuthenticatedAssignmentsRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
+  '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/finances': typeof AuthenticatedFinancesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/courses' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/assignments'
+    | '/assistant'
+    | '/calendar'
+    | '/courses'
+    | '/dashboard'
+    | '/finances'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/courses' | '/dashboard'
+  to:
+    | '/'
+    | '/assignments'
+    | '/assistant'
+    | '/calendar'
+    | '/courses'
+    | '/dashboard'
+    | '/finances'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_authenticated/assignments'
+    | '/_authenticated/assistant'
+    | '/_authenticated/calendar'
     | '/_authenticated/courses'
     | '/_authenticated/dashboard'
+    | '/_authenticated/finances'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -85,6 +140,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/assignments': {
+      id: '/_authenticated/assignments'
+      path: '/assignments'
+      fullPath: '/assignments'
+      preLoaderRoute: typeof AuthenticatedAssignmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/courses': {
       id: '/_authenticated/courses'
       path: '/courses'
@@ -99,17 +175,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finances': {
+      id: '/_authenticated/finances'
+      path: '/finances'
+      fullPath: '/finances'
+      preLoaderRoute: typeof AuthenticatedFinancesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssignmentsRoute: typeof AuthenticatedAssignmentsRoute
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
+  AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFinancesRoute: typeof AuthenticatedFinancesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssignmentsRoute: AuthenticatedAssignmentsRoute,
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
+  AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFinancesRoute: AuthenticatedFinancesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
