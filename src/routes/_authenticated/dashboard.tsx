@@ -5,13 +5,7 @@ import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/app-button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { getOnboardingState } from "@/lib/onboarding.functions";
@@ -50,14 +44,6 @@ function addDays(key: string, days: number): string {
   date.setDate(date.getDate() + days);
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
-}
-
-function formatDay(key: string): string {
-  return new Date(`${key}T00:00:00`).toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function DashboardPage() {
@@ -242,7 +228,7 @@ function DashboardPage() {
         )}
       </Panel>
 
-      <ItemDetails item={selected} onClose={() => setSelected(null)} />
+      <PlannerItemDetails item={selected} onClose={() => setSelected(null)} />
     </>
   );
 }
@@ -281,54 +267,5 @@ function ItemRow({
         </span>
       </button>
     </li>
-  );
-}
-
-/** Detail view, including where the fact came from in the imported file. */
-function ItemDetails({ item, onClose }: { item: PlannerItem | null; onClose: () => void }) {
-  return (
-    <Dialog open={Boolean(item)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg">
-        {item && (
-          <>
-            <DialogHeader>
-              <DialogTitle className="font-display">{item.title}</DialogTitle>
-              <DialogDescription>
-                {[item.courseName ?? "No course", item.type].join(" · ")}
-              </DialogDescription>
-            </DialogHeader>
-
-            <dl className="space-y-3 text-sm">
-              <Detail label="When">
-                {item.date ? formatDay(item.date) : "No date found"}
-                {item.time ? ` · ${item.time}` : ""}
-              </Detail>
-              {item.location && <Detail label="Where">{item.location}</Detail>}
-              {item.description && <Detail label="Details">{item.description}</Detail>}
-              {item.sourceName && <Detail label="From file">{item.sourceName}</Detail>}
-              {item.sourceText && (
-                <Detail label="Original wording">
-                  <span className="italic text-foreground/70">“{item.sourceText}”</span>
-                </Detail>
-              )}
-              {item.aiGenerated && (
-                <p className="text-xs text-foreground/50">
-                  Read automatically from your uploaded course file.
-                </p>
-              )}
-            </dl>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[11px] uppercase tracking-[0.12em] text-foreground/45">{label}</dt>
-      <dd className="mt-0.5 text-pretty text-foreground/80">{children}</dd>
-    </div>
   );
 }
