@@ -398,7 +398,7 @@ function ProgressSummary({ summary }: { summary: Summary }) {
 
 /** The plain-language result once every file has finished. */
 function FinishedSummary({ summary }: { summary: Summary }) {
-  const { data: attention = [] } = useQuery({
+  const { data: attention, isPending } = useQuery({
     queryKey: ["attention-items"],
     queryFn: () => listAttentionItems(),
   });
@@ -407,7 +407,10 @@ function FinishedSummary({ summary }: { summary: Summary }) {
     `${summary.complete} course${summary.complete === 1 ? "" : "s"} imported`,
     `${summary.items} academic item${summary.items === 1 ? "" : "s"} found`,
     `${summary.exams} exam${summary.exams === 1 ? "" : "s"} found`,
-    `${attention.length} item${attention.length === 1 ? "" : "s"} need attention`,
+    // Counted only once the list is actually loaded, so it never briefly reads zero.
+    isPending || !attention
+      ? "Checking for anything that needs your attention…"
+      : `${attention.length} item${attention.length === 1 ? "" : "s"} need attention`,
   ];
 
   return (
@@ -494,6 +497,7 @@ function AttentionPanel() {
   const review = useServerFn(reviewImportedItem);
   const bulk = useServerFn(bulkApproveItems);
   const [pending, setPending] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["attention-items"],
@@ -522,6 +526,25 @@ function AttentionPanel() {
         <PanelHeader title="Needs attention" aside="Nothing outstanding" />
         <p className="text-sm text-foreground/60">
           Everything we read was clear enough to add to your planner.
+        </p>
+      </Panel>
+    );
+  }
+
+  // Normal extracted data never asks for approval. Only unresolved conflicts surface here, and
+  // they stay folded away behind a single line until the student opens them.
+  if (!open) {
+    return (
+      <Panel>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full text-left font-display text-base text-foreground underline-offset-4 hover:underline"
+        >
+          {items.length} item{items.length === 1 ? "" : "s"} need your attention
+        </button>
+        <p className="mt-1 text-sm text-foreground/60">
+          Everything else was added to your planner automatically.
         </p>
       </Panel>
     );

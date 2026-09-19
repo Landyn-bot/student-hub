@@ -17,6 +17,8 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseItemDate } from "@/lib/import-dates";
+// Type only: the reconciliation engine itself is loaded inside the handler.
+import type { ExistingItem } from "@/lib/server/conflicts.server";
 
 /* ------------------------------------------------------------------ */
 /* Contract                                                            */
@@ -80,11 +82,26 @@ export type SaveCourseImportResult =
       documentId: string;
       itemsSaved: number;
       examsSaved: number;
+      /** Repeats of something already stored, folded into the existing item. */
+      merged: number;
+      /** Disagreements the system settled on its own from the source wording. */
+      autoResolved: number;
       needsAttention: number;
     }
   | { ok: false; error: string };
 
 type Item = z.infer<typeof itemSchema>;
+
+/** The four kinds of academic row an import can produce. */
+type Kind = ReviewKind;
+
+/** The date column belonging to each kind; policies carry no date. */
+function dateUpdate(kind: Kind, date: string): Record<string, string> {
+  if (kind === "assignment") return { due_date: date };
+  if (kind === "exam") return { exam_date: date };
+  if (kind === "event") return { starts_at: `${date}T00:00:00Z` };
+  return {};
+}
 
 /** Low-confidence or unreadable timing is surfaced to the student instead of silently kept. */
 const LOW_CONFIDENCE = 0.5;
@@ -149,15 +166,44 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         data.documentTitle ??
         data.sourceName.replace(/\.epub$/i, "");
 
-      // One course per upload; re-running the same upload updates it instead of duplicating.
-      const { data: existing } = await supabase
+      // Re-running the same upload updates it; a different source for a course we already have
+      // (a second export, an announcement pack) joins that course instead of duplicating it.
+      const courseCode = extraction.course.course_code?.trim() ?? "";
+      let found: { id: string } | null = null;
+
+      const byImport = await supabase
         .from("courses")
         .select("id")
         .eq("user_id", userId)
         .eq("external_id", data.importId)
         .maybeSingle();
+      found = byImport.data ?? null;
 
-      let courseId = existing?.id ?? null;
+      if (!found && courseCode.length > 0) {
+        const byCode = await supabase
+          .from("courses")
+          .select("id")
+          .eq("user_id", userId)
+          .ilike("course_code", courseCode)
+          .limit(1)
+          .maybeSingle();
+        found = byCode.data ?? null;
+      }
+      if (!found) {
+        // Course titles differ between exports ("PHYS 0475 Intro Physics" vs "Intro Physics"),
+        // so a close wording match counts as the same course.
+        const { data: courses } = await supabase
+          .from("courses")
+          .select("id, name")
+          .eq("user_id", userId);
+        const { titleSimilarity } = await import("@/lib/server/conflicts.server");
+        const close = (courses ?? [])
+          .map((row) => ({ row, score: titleSimilarity(courseName, row.name) }))
+          .sort((a, b) => b.score - a.score)[0];
+        if (close && close.score >= 0.6) found = { id: close.row.id };
+      }
+
+      let courseId = found?.id ?? null;
       if (courseId) {
         await supabase
           .from("courses")
@@ -201,96 +247,335 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         .single();
       if (documentError || !document) throw documentError ?? new Error("Document not stored");
 
-      // Replace any rows from a previous run of this same upload.
-      for (const table of ["assignments", "exams", "calendar_events", "course_policies"] as const) {
-        await supabase.from(table).delete().eq("user_id", userId).eq("course_id", courseId);
+      // Drop only the rows a previous run of this same file produced. Rows that came from other
+      // sources stay, so they can be compared against what this file says. Earlier documents
+      // themselves are kept — source material is never removed.
+      const { data: priorDocuments } = await supabase
+        .from("course_documents")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("course_id", courseId)
+        .eq("filename", data.sourceName)
+        .neq("id", document.id);
+      const priorIds = (priorDocuments ?? []).map((row) => row.id);
+      if (priorIds.length > 0) {
+        for (const table of [
+          "assignments",
+          "exams",
+          "calendar_events",
+          "course_policies",
+        ] as const) {
+          await supabase
+            .from(table)
+            .delete()
+            .eq("user_id", userId)
+            .in("source_document_id", priorIds);
+        }
       }
 
-      let needsAttention = 0;
-      const common = (item: Item, ambiguous: boolean) => {
-        const review = reviewFor(item, ambiguous);
-        if (review.review_status === "needs_attention") needsAttention += 1;
-        return {
-          user_id: userId,
-          course_id: courseId,
-          title: item.title,
-          source_document_id: document.id,
-          source_text: item.source.sourceText,
-          source_chunk_key: item.source.chunkId,
-          ai_generated: true,
-          ai_confidence: item.confidence ?? null,
-          ...review,
-        };
+      /* ----- what this course already holds, for conflict detection ----- */
+
+      const [existingAssignments, existingExams, existingEvents, existingPolicies] =
+        await Promise.all([
+          supabase
+            .from("assignments")
+            .select("id, title, due_date, source_text, source_document_id")
+            .eq("user_id", userId)
+            .eq("course_id", courseId)
+            .neq("review_status", "rejected"),
+          supabase
+            .from("exams")
+            .select("id, title, exam_date, source_text, source_document_id")
+            .eq("user_id", userId)
+            .eq("course_id", courseId)
+            .neq("review_status", "rejected"),
+          supabase
+            .from("calendar_events")
+            .select("id, title, starts_at, source_text, source_document_id")
+            .eq("user_id", userId)
+            .eq("course_id", courseId)
+            .neq("review_status", "rejected"),
+          supabase
+            .from("course_policies")
+            .select("id, title, source_text, source_document_id")
+            .eq("user_id", userId)
+            .eq("course_id", courseId)
+            .neq("review_status", "rejected"),
+        ]);
+
+      const known: Record<Kind, ExistingItem[]> = {
+        assignment: (existingAssignments.data ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          date: row.due_date,
+          sourceText: row.source_text,
+          documentId: row.source_document_id,
+        })),
+        exam: (existingExams.data ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          date: row.exam_date,
+          sourceText: row.source_text,
+          documentId: row.source_document_id,
+        })),
+        event: (existingEvents.data ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          date: row.starts_at ? row.starts_at.slice(0, 10) : null,
+          sourceText: row.source_text,
+          documentId: row.source_document_id,
+        })),
+        policy: (existingPolicies.data ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          date: null,
+          sourceText: row.source_text,
+          documentId: row.source_document_id,
+        })),
       };
 
-      // assignments / quizzes / projects -> assignments
-      const assignmentRows = [
+      /* ----- candidates from this document ----- */
+
+      type Candidate = {
+        kind: Kind;
+        item: Item;
+        date: string | null;
+        ambiguous: boolean;
+        extra: Record<string, unknown>;
+      };
+
+      const candidates: Candidate[] = [];
+
+      for (const item of [
         ...extraction.assignments,
         ...extraction.quizzes,
         ...extraction.projects,
-      ].map((item) => {
+      ]) {
         const parsed = dateFor(item, year, true);
-        return {
-          ...common(item, parsed.date === null && parsed.ambiguous),
-          description: item.description ?? null,
-          due_date: parsed.date,
-        };
-      });
-
-      const examRows = extraction.exams.map((item) => {
+        candidates.push({
+          kind: "assignment",
+          item,
+          date: parsed.date,
+          ambiguous: parsed.date === null && parsed.ambiguous,
+          extra: { description: item.description ?? null, due_date: parsed.date },
+        });
+      }
+      for (const item of extraction.exams) {
         const parsed = dateFor(item, year, false);
-        return {
-          ...common(item, parsed.date === null && parsed.ambiguous),
-          description: item.description ?? null,
-          exam_date: parsed.date,
-        };
-      });
-
-      const eventRows = [...extraction.important_dates, ...extraction.readings].map((item) => {
+        candidates.push({
+          kind: "exam",
+          item,
+          date: parsed.date,
+          ambiguous: parsed.date === null && parsed.ambiguous,
+          extra: { description: item.description ?? null, exam_date: parsed.date },
+        });
+      }
+      for (const item of [...extraction.important_dates, ...extraction.readings]) {
         const parsed = dateFor(item, year, false);
-        return {
-          ...common(item, parsed.date === null && parsed.ambiguous),
-          description: item.description ?? null,
-          event_type: "event",
-          all_day: true,
-          starts_at: parsed.date ? `${parsed.date}T00:00:00Z` : null,
-        };
-      });
-
-      const policyRows = [
+        candidates.push({
+          kind: "event",
+          item,
+          date: parsed.date,
+          ambiguous: parsed.date === null && parsed.ambiguous,
+          extra: {
+            description: item.description ?? null,
+            event_type: "event",
+            all_day: true,
+            starts_at: parsed.date ? `${parsed.date}T00:00:00Z` : null,
+          },
+        });
+      }
+      for (const { item, type } of [
         ...extraction.grading.map((item) => ({ item, type: "grading" })),
         ...extraction.policies.map((item) => ({ item, type: "general" })),
         ...extraction.other_important_information.map((item) => ({ item, type: "other" })),
-      ].map(({ item, type }) => ({
-        ...common(item, false),
-        policy_type: type,
-        content: [item.description, item.weight].filter(Boolean).join(" · ") || null,
-      }));
-
-      if (assignmentRows.length > 0) {
-        const { error } = await supabase.from("assignments").insert(assignmentRows);
-        if (error) throw error;
-      }
-      if (examRows.length > 0) {
-        const { error } = await supabase.from("exams").insert(examRows);
-        if (error) throw error;
-      }
-      if (eventRows.length > 0) {
-        const { error } = await supabase.from("calendar_events").insert(eventRows);
-        if (error) throw error;
-      }
-      if (policyRows.length > 0) {
-        const { error } = await supabase.from("course_policies").insert(policyRows);
-        if (error) throw error;
+      ]) {
+        candidates.push({
+          kind: "policy",
+          item,
+          date: null,
+          ambiguous: false,
+          extra: {
+            policy_type: type,
+            content: [item.description, item.weight].filter(Boolean).join(" · ") || null,
+          },
+        });
       }
 
-      const itemsSaved =
-        assignmentRows.length + examRows.length + eventRows.length + policyRows.length;
+      /* ----- reconcile each candidate against what is already known ----- */
+
+      const { reconcileCandidate, conflictLimits } = await import("@/lib/server/conflicts.server");
+      const budget = { remaining: conflictLimits.MAX_SEMANTIC_COMPARISONS };
+
+      let needsAttention = 0;
+      let itemsSaved = 0;
+      let examsSaved = 0;
+      let mergedCount = 0;
+      let resolvedCount = 0;
+
+      const logConflict = async (entry: {
+        kind: Kind;
+        itemId: string;
+        resolution: string;
+        existingValue: string | null;
+        incomingValue: string | null;
+        chosenValue: string | null;
+        existingSourceText: string | null;
+        incomingSourceText: string;
+        detail: string;
+      }) => {
+        await supabase.from("item_conflicts").insert({
+          user_id: userId,
+          course_id: courseId,
+          item_kind: entry.kind,
+          item_id: entry.itemId,
+          field: "date",
+          resolution: entry.resolution,
+          existing_value: entry.existingValue,
+          incoming_value: entry.incomingValue,
+          chosen_value: entry.chosenValue,
+          existing_source_text: entry.existingSourceText,
+          incoming_source_text: entry.incomingSourceText,
+          incoming_document_id: document.id,
+          detail: entry.detail,
+        });
+      };
+
+      for (const candidate of candidates) {
+        const decision = await reconcileCandidate(
+          {
+            title: candidate.item.title,
+            date: candidate.date,
+            sourceText: candidate.item.source.sourceText,
+          },
+          known[candidate.kind],
+          budget,
+        );
+
+        if (decision.kind === "insert") {
+          const review = reviewFor(candidate.item, candidate.ambiguous);
+          if (review.review_status === "needs_attention") needsAttention += 1;
+          const { data: inserted, error } = await supabase
+            .from(tableFor[candidate.kind])
+            .insert({
+              user_id: userId,
+              course_id: courseId,
+              title: candidate.item.title,
+              source_document_id: document.id,
+              source_text: candidate.item.source.sourceText,
+              source_chunk_key: candidate.item.source.chunkId,
+              ai_generated: true,
+              ai_confidence: candidate.item.confidence ?? null,
+              ...review,
+              ...candidate.extra,
+            })
+            .select("id")
+            .single();
+          if (error || !inserted) throw error ?? new Error("Item could not be saved");
+
+          itemsSaved += 1;
+          if (candidate.kind === "exam") examsSaved += 1;
+          known[candidate.kind].push({
+            id: inserted.id,
+            title: candidate.item.title,
+            date: candidate.date,
+            sourceText: candidate.item.source.sourceText,
+            documentId: document.id,
+          });
+          continue;
+        }
+
+        // From here on the item already exists; the source stays recorded either way.
+        const stored = known[candidate.kind].find((row) => row.id === decision.existingId);
+
+        if (decision.kind === "merge") {
+          mergedCount += 1;
+          if (decision.fillDate !== null) {
+            await supabase
+              .from(tableFor[candidate.kind])
+              .update({
+                ...dateUpdate(candidate.kind, decision.fillDate),
+                review_status: "approved",
+                needs_attention_reason: null,
+              })
+              .eq("id", decision.existingId)
+              .eq("user_id", userId);
+            if (stored) stored.date = decision.fillDate;
+          }
+          await logConflict({
+            kind: candidate.kind,
+            itemId: decision.existingId,
+            resolution: decision.resolution,
+            existingValue: decision.existingValue,
+            incomingValue: decision.incomingValue,
+            chosenValue: decision.fillDate ?? decision.existingValue,
+            existingSourceText: decision.existingSourceText,
+            incomingSourceText: candidate.item.source.sourceText,
+            detail: decision.detail,
+          });
+          continue;
+        }
+
+        if (decision.kind === "supersede") {
+          resolvedCount += 1;
+          await supabase
+            .from(tableFor[candidate.kind])
+            .update({
+              ...dateUpdate(candidate.kind, decision.newDate),
+              source_text: candidate.item.source.sourceText,
+              source_chunk_key: candidate.item.source.chunkId,
+              source_document_id: document.id,
+              review_status: "approved",
+              needs_attention_reason: null,
+            })
+            .eq("id", decision.existingId)
+            .eq("user_id", userId);
+          if (stored) stored.date = decision.newDate;
+          await logConflict({
+            kind: candidate.kind,
+            itemId: decision.existingId,
+            resolution: "auto_resolved",
+            existingValue: decision.existingValue,
+            incomingValue: decision.newDate,
+            chosenValue: decision.newDate,
+            existingSourceText: decision.existingSourceText,
+            incomingSourceText: candidate.item.source.sourceText,
+            detail: decision.detail,
+          });
+          continue;
+        }
+
+        // Genuinely unresolved: the student is asked, and only here.
+        needsAttention += 1;
+        await supabase
+          .from(tableFor[candidate.kind])
+          .update({
+            review_status: "needs_attention",
+            needs_attention_reason: `${decision.reason} (${decision.existingValue ?? "unknown"} or ${
+              decision.incomingValue ?? "unknown"
+            })`,
+          })
+          .eq("id", decision.existingId)
+          .eq("user_id", userId);
+        await logConflict({
+          kind: candidate.kind,
+          itemId: decision.existingId,
+          resolution: "needs_attention",
+          existingValue: decision.existingValue,
+          incomingValue: decision.incomingValue,
+          chosenValue: null,
+          existingSourceText: decision.existingSourceText,
+          incomingSourceText: candidate.item.source.sourceText,
+          detail: decision.detail,
+        });
+      }
 
       console.log("[semester-import] saved", {
         userId,
         courseId,
         itemsSaved,
+        mergedCount,
+        resolvedCount,
         needsAttention,
       });
 
@@ -300,7 +585,9 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         courseName,
         documentId: document.id,
         itemsSaved,
-        examsSaved: examRows.length,
+        examsSaved,
+        merged: mergedCount,
+        autoResolved: resolvedCount,
         needsAttention,
       };
     } catch (error) {
