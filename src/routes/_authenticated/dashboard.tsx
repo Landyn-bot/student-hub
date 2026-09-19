@@ -180,12 +180,17 @@ function DashboardPage() {
                       palette.hover,
                     )}
                   >
-                    <span className={cn("w-1.5 shrink-0 self-stretch", palette.solid)} aria-hidden />
+                    <span
+                      className={cn("w-1.5 shrink-0 self-stretch", palette.solid)}
+                      aria-hidden
+                    />
                     <span className="min-w-0 flex-1 py-3">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
                       </span>
-                      <span className={cn("mt-0.5 block truncate text-xs font-medium", palette.text)}>
+                      <span
+                        className={cn("mt-0.5 block truncate text-xs font-medium", palette.text)}
+                      >
                         {[item.courseName ?? "No course", dueLabel(item)].join(" · ")}
                       </span>
                       <span className="mt-1 block text-xs text-foreground/60">{item.reason}</span>
@@ -299,22 +304,30 @@ function DashboardPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => {
               const palette = coursePalette(course.id);
-              return <div
-                key={course.id}
-                className={cn("inset-tile overflow-hidden border-l-4 bg-background p-4", palette.border)}
-              >
-                <span className={cn("mb-3 block size-3 rounded-full", palette.solid)} aria-hidden />
-                <p className="font-display text-base font-semibold text-foreground">
-                  {course.name}
-                </p>
-                <p className="mt-1 text-xs text-foreground/55">
-                  {course.courseCode ?? course.instructor ?? "Imported course"}
-                </p>
-                <p className="mt-3 text-sm text-foreground/70">
-                  {groups.perCourse.get(course.id) ?? 0} upcoming item
-                  {(groups.perCourse.get(course.id) ?? 0) === 1 ? "" : "s"}
-                </p>
-              </div>;
+              return (
+                <div
+                  key={course.id}
+                  className={cn(
+                    "inset-tile overflow-hidden border-l-4 bg-background p-4",
+                    palette.border,
+                  )}
+                >
+                  <span
+                    className={cn("mb-3 block size-3 rounded-full", palette.solid)}
+                    aria-hidden
+                  />
+                  <p className="font-display text-base font-semibold text-foreground">
+                    {course.name}
+                  </p>
+                  <p className="mt-1 text-xs text-foreground/55">
+                    {course.courseCode ?? course.instructor ?? "Imported course"}
+                  </p>
+                  <p className="mt-3 text-sm text-foreground/70">
+                    {groups.perCourse.get(course.id) ?? 0} upcoming item
+                    {(groups.perCourse.get(course.id) ?? 0) === 1 ? "" : "s"}
+                  </p>
+                </div>
+              );
             })}
           </div>
         )}

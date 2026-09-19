@@ -94,33 +94,38 @@ function AssignmentsPage() {
           <ul className="space-y-2">
             {items.map((item) => {
               const palette = coursePalette(item.courseId);
-              return <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelected(item)}
-                  className={cn(
-                    "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
-                    palette.hover,
-                  )}
-                >
-                  <span className={cn("w-1.5 shrink-0 self-stretch", palette.solid)} aria-hidden />
-                  <span className="min-w-0 flex-1 py-3">
-                    <span className={cn("block truncate text-xs font-semibold", palette.text)}>
-                      {item.courseName ?? "No course"}
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(item)}
+                    className={cn(
+                      "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+                      palette.hover,
+                    )}
+                  >
+                    <span
+                      className={cn("w-1.5 shrink-0 self-stretch", palette.solid)}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 py-3">
+                      <span className={cn("block truncate text-xs font-semibold", palette.text)}>
+                        {item.courseName ?? "No course"}
+                      </span>
+                      <span className="block truncate text-sm font-medium text-foreground">
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs capitalize text-foreground/55">
+                        {item.type}
+                      </span>
                     </span>
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {item.title}
+                    <span className="shrink-0 py-3 pr-3 text-right text-xs text-foreground/60">
+                      {item.date ? formatDay(item.date) : "No date"}
+                      {item.time ? <span className="block">{item.time}</span> : null}
                     </span>
-                    <span className="mt-0.5 block truncate text-xs capitalize text-foreground/55">
-                      {item.type}
-                    </span>
-                  </span>
-                  <span className="shrink-0 py-3 pr-3 text-right text-xs text-foreground/60">
-                    {item.date ? formatDay(item.date) : "No date"}
-                    {item.time ? <span className="block">{item.time}</span> : null}
-                  </span>
-                </button>
-              </li>;
+                  </button>
+                </li>
+              );
             })}
           </ul>
         )}
