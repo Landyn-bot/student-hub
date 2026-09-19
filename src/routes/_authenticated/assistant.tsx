@@ -19,11 +19,7 @@ import {
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import {
-  askAssistant,
-  getAssistantChat,
-  type AssistantMessage,
-} from "@/lib/assistant.functions";
+import { askAssistant, getAssistantChat, type AssistantMessage } from "@/lib/assistant.functions";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   head: () => ({
@@ -77,7 +73,12 @@ function AssistantPage() {
     setStatus("submitted");
     setPending((current) => [
       ...current,
-      { id: `local-${Date.now()}`, role: "user", content: question, createdAt: new Date().toISOString() },
+      {
+        id: `local-${Date.now()}`,
+        role: "user",
+        content: question,
+        createdAt: new Date().toISOString(),
+      },
     ]);
 
     try {

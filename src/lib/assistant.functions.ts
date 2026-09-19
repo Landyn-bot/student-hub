@@ -22,9 +22,7 @@ export type AssistantChat = {
   messages: AssistantMessage[];
 };
 
-export type AssistantAnswer =
-  | { ok: true; answer: AssistantMessage }
-  | { ok: false; error: string };
+export type AssistantAnswer = { ok: true; answer: AssistantMessage } | { ok: false; error: string };
 
 /** How many recent turns are replayed to the model for follow-up questions. */
 const HISTORY_TURNS = 8;
@@ -34,10 +32,7 @@ const MAX_CONTEXT_ITEMS = 80;
 type ConversationRow = { id: string; title: string };
 
 /** Finds the student's single ongoing conversation, creating it on first use. */
-async function getOrCreateConversation(
-  supabase: any,
-  userId: string,
-): Promise<ConversationRow> {
+async function getOrCreateConversation(supabase: any, userId: string): Promise<ConversationRow> {
   const existing = await supabase
     .from("chat_conversations")
     .select("id, title")
@@ -134,9 +129,7 @@ async function loadAcademicContext(supabase: any, userId: string): Promise<strin
     itemLine([c.name, c.course_code ? `code ${c.course_code}` : null, c.instructor]),
   );
   sections.push(
-    courseLines.length > 0
-      ? `COURSES\n${courseLines.join("\n")}`
-      : "COURSES\n(none imported yet)",
+    courseLines.length > 0 ? `COURSES\n${courseLines.join("\n")}` : "COURSES\n(none imported yet)",
   );
 
   const assignmentLines = (assignments.data ?? []).map((a: any) =>
@@ -167,7 +160,9 @@ async function loadAcademicContext(supabase: any, userId: string): Promise<strin
     ]),
   );
   sections.push(
-    examLines.length > 0 ? `EXAMS AND QUIZZES\n${examLines.join("\n")}` : "EXAMS AND QUIZZES\n(none imported yet)",
+    examLines.length > 0
+      ? `EXAMS AND QUIZZES\n${examLines.join("\n")}`
+      : "EXAMS AND QUIZZES\n(none imported yet)",
   );
 
   const eventLines = (events.data ?? []).map((e: any) => {
@@ -204,7 +199,12 @@ export const askAssistant = createServerFn({ method: "POST" })
     // Save the student's message first so it survives even if the model fails.
     const userInsert = await supabase
       .from("chat_messages")
-      .insert({ user_id: userId, conversation_id: conversation.id, role: "user", content: data.question })
+      .insert({
+        user_id: userId,
+        conversation_id: conversation.id,
+        role: "user",
+        content: data.question,
+      })
       .select("id, created_at")
       .single();
     if (userInsert.error) return { ok: false, error: "Could not save your message." };
@@ -252,7 +252,9 @@ export const askAssistant = createServerFn({ method: "POST" })
       const result = await runNemotron({ system, user, maxTokens: 800 });
       text = result.text.trim();
       model = result.model;
-      tokens = result.usage ? result.usage.promptTokens! + (result.usage.completionTokens ?? 0) : null;
+      tokens = result.usage
+        ? result.usage.promptTokens! + (result.usage.completionTokens ?? 0)
+        : null;
     } catch (error) {
       // NemotronError messages are already safe to show; anything else is generic.
       const { NemotronError } = await import("@/lib/nemotron.server");
