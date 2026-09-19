@@ -78,11 +78,42 @@ function classifyStatus(status: number): NemotronFailureKind {
   return "upstream";
 }
 
+/** Failures worth one more try: the service was momentarily busy or unreachable. */
+const RETRYABLE: ReadonlySet<NemotronFailureKind> = new Set([
+  "rate_limited",
+  "network",
+  "upstream",
+]);
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1_500;
+
 /**
  * Sends one chat completion to Nemotron through the hosted NIM API.
  * Throws a NemotronError for every failure mode so callers can react by kind.
+ * Transient failures (rate limits, 5xx, network blips) are retried a couple of times.
  */
 export async function runNemotron(request: NemotronRequest): Promise<NemotronResult> {
+  let lastError: NemotronError | null = null;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await requestOnce(request);
+    } catch (error) {
+      if (!(error instanceof NemotronError)) throw error;
+      const retryable =
+        RETRYABLE.has(error.kind) &&
+        (error.status === undefined || error.status >= 500 || error.status === 429);
+      lastError = error;
+      if (!retryable || attempt === MAX_ATTEMPTS) throw error;
+      console.warn(`[nemotron] retrying after ${error.kind} (attempt ${attempt})`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+    }
+  }
+
+  throw lastError ?? new NemotronError("network", messageFor("network"));
+}
+
+async function requestOnce(request: NemotronRequest): Promise<NemotronResult> {
   // Read the secret at call time; it must never be inlined into a client bundle.
   const apiKey = process.env["NVIDIA_API_KEY"];
   if (!apiKey) {

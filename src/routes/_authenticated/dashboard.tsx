@@ -174,7 +174,7 @@ function DashboardPage() {
                     onClick={() => match && setSelected(match)}
                     className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
                   >
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
                       </span>
@@ -194,8 +194,8 @@ function DashboardPage() {
         )}
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel>
+      <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+        <Panel className="min-w-0">
           <PanelHeader
             title="Today"
             aside={groups.dueToday.length > 0 ? `${groups.dueToday.length} due` : undefined}
@@ -222,7 +222,7 @@ function DashboardPage() {
           )}
         </Panel>
 
-        <Panel>
+        <Panel className="min-w-0">
           <PanelHeader
             title="Upcoming"
             aside={groups.upcoming.length > 0 ? `${groups.upcoming.length} items` : undefined}
@@ -328,7 +328,8 @@ function ItemRow({
         onClick={() => onOpen(item)}
         className="inset-tile flex w-full items-start justify-between gap-3 bg-background p-3 text-left transition hover:bg-primary/5"
       >
-        <span className="min-w-0">
+        {/* flex-1 keeps the text column bounded so the truncation below can take effect. */}
+        <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>
           <span className="mt-0.5 block truncate text-xs text-foreground/55">
             {[item.courseName ?? "No course", item.type].join(" · ")}
