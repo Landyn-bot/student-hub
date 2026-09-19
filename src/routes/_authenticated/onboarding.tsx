@@ -12,12 +12,14 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { SchoolField } from "@/components/app/SchoolField";
 import { Button } from "@/components/ui/app-button";
 import {
   completeOnboarding,
   getOnboardingState,
   type PlanningStyle,
 } from "@/lib/onboarding.functions";
+import { guessCurrentSemester } from "@/lib/semester";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -64,14 +66,17 @@ function OnboardingPage() {
   const queryClient = useQueryClient();
   const fetchOnboarding = useServerFn(getOnboardingState);
   const saveOnboarding = useServerFn(completeOnboarding);
+  // Today's date decides the semester we suggest, so students only confirm it.
+  const [suggested] = useState(() => guessCurrentSemester());
   const [step, setStep] = useState(0);
   const [school, setSchool] = useState("");
-  const [termName, setTermName] = useState("");
-  const [startsOn, setStartsOn] = useState("");
-  const [endsOn, setEndsOn] = useState("");
+  const [termName, setTermName] = useState(suggested.name);
+  const [startsOn, setStartsOn] = useState(suggested.startsOn);
+  const [endsOn, setEndsOn] = useState(suggested.endsOn);
   const [weekStartsOn, setWeekStartsOn] = useState(1);
   const [reminderHours, setReminderHours] = useState<0 | 12 | 24 | 48 | 72>(24);
   const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
+  const [emailReminders, setEmailReminders] = useState(true);
 
   const { data } = useQuery({
     queryKey: ["onboarding"],
@@ -81,13 +86,15 @@ function OnboardingPage() {
   useEffect(() => {
     if (!data) return;
     setSchool(data.school ?? "");
-    setTermName(data.term?.name ?? "");
-    setStartsOn(data.term?.starts_on ?? "");
-    setEndsOn(data.term?.ends_on ?? "");
+    // Keep the suggested semester unless one was already saved.
+    setTermName(data.term?.name ?? suggested.name);
+    setStartsOn(data.term?.starts_on ?? suggested.startsOn);
+    setEndsOn(data.term?.ends_on ?? suggested.endsOn);
     setWeekStartsOn(data.preferences.week_starts_on);
     setReminderHours(data.preferences.default_reminder_hours as 0 | 12 | 24 | 48 | 72);
     setPlanningStyle(data.preferences.planning_style);
-  }, [data]);
+    setEmailReminders(data.preferences.email_reminders);
+  }, [data, suggested]);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -100,6 +107,7 @@ function OnboardingPage() {
           week_starts_on: weekStartsOn,
           default_reminder_hours: reminderHours,
           planning_style: planningStyle,
+          email_reminders: emailReminders,
         },
       }),
     onSuccess: async () => {
@@ -192,24 +200,19 @@ function OnboardingPage() {
                 {step === 0
                   ? "This keeps your workspace grounded in your school."
                   : step === 1
-                    ? "Dates help Syllo frame your calendar without adding any coursework."
-                    : "These defaults shape future reminders and weekly views."}
+                    ? "We filled in the typical dates for this time of year — just check them."
+                    : "These defaults shape your reminders and weekly views."}
               </p>
             </div>
 
             {step === 0 ? (
-              <label className="block max-w-lg text-sm font-medium text-foreground/75">
+              <div className="block max-w-lg text-sm font-medium text-foreground/75">
                 School or university
-                <input
-                  autoFocus
-                  className={fieldClass}
-                  value={school}
-                  onChange={(event) => setSchool(event.target.value)}
-                  placeholder="University of Pittsburgh"
-                  maxLength={160}
-                  autoComplete="organization"
-                />
-              </label>
+                <SchoolField autoFocus className={fieldClass} value={school} onChange={setSchool} />
+                <p className="mt-2 text-xs font-normal text-foreground/45">
+                  Start typing to search U.S. colleges and universities.
+                </p>
+              </div>
             ) : null}
 
             {step === 1 ? (
@@ -302,6 +305,23 @@ function OnboardingPage() {
                     </select>
                   </label>
                 </div>
+                <label className="inset-tile flex cursor-pointer items-start gap-3 p-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 size-4 accent-[hsl(var(--primary))]"
+                    checked={emailReminders}
+                    onChange={(event) => setEmailReminders(event.target.checked)}
+                    disabled={reminderHours === 0}
+                  />
+                  <span className="block">
+                    <span className="block text-sm font-semibold">Email me my reminders</span>
+                    <span className="mt-1 block text-xs leading-5 text-foreground/50">
+                      {reminderHours === 0
+                        ? "Turn a reminder time on above to receive emails."
+                        : `Sent to ${data?.reminder_email ?? "your account email"} before each due date.`}
+                    </span>
+                  </span>
+                </label>
               </div>
             ) : null}
 

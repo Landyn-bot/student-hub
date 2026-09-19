@@ -18,7 +18,10 @@ export type OnboardingState = {
     week_starts_on: number;
     default_reminder_hours: number;
     planning_style: PlanningStyle;
+    email_reminders: boolean;
   };
+  // Reminders are sent to the address the student signed in with.
+  reminder_email: string | null;
 };
 
 const onboardingInput = z
@@ -36,6 +39,7 @@ const onboardingInput = z
       z.literal(72),
     ]),
     planning_style: z.enum(planningStyles),
+    email_reminders: z.boolean(),
   })
   .refine((value) => value.ends_on >= value.starts_on, {
     message: "The semester end date must be after its start date",
@@ -49,7 +53,7 @@ export const getOnboardingState = createServerFn({ method: "GET" })
       context.supabase
         .from("profiles")
         .select(
-          "school, onboarding_completed_at, week_starts_on, default_reminder_hours, planning_style",
+          "school, onboarding_completed_at, week_starts_on, default_reminder_hours, planning_style, email_reminders",
         )
         .eq("id", context.userId)
         .maybeSingle(),
@@ -79,7 +83,9 @@ export const getOnboardingState = createServerFn({ method: "GET" })
         week_starts_on: profile?.week_starts_on ?? 1,
         default_reminder_hours: profile?.default_reminder_hours ?? 24,
         planning_style: planningStyle,
+        email_reminders: profile?.email_reminders ?? true,
       },
+      reminder_email: (context.claims as { email?: string } | null)?.email ?? null,
     };
   });
 
@@ -96,6 +102,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       _week_starts_on: data.week_starts_on,
       _default_reminder_hours: data.default_reminder_hours,
       _planning_style: data.planning_style,
+      _email_reminders: data.email_reminders,
     });
 
     if (error) throw error;
