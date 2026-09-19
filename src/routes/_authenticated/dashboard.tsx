@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ErrorNote, LoadingRows, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -71,7 +72,13 @@ function DashboardPage() {
 
   // Shares the planner cache key with the import flow, so the dashboard
   // refreshes itself as soon as newly imported data lands.
-  const { data: planner, isPending } = useQuery({
+  const {
+    data: planner,
+    isPending,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["planner"],
     queryFn: () => fetchPlanner(),
   });
@@ -146,7 +153,7 @@ function DashboardPage() {
       <Panel className="mb-5">
         <PanelHeader title="What should I work on?" aside="Ranked from your own deadlines" />
         {focusPending ? (
-          <p className="text-sm text-foreground/50">Working out your priorities…</p>
+          <LoadingRows rows={2} />
         ) : (focus?.items.length ?? 0) === 0 ? (
           <EmptyState
             title="Nothing to prioritise yet"
@@ -194,7 +201,9 @@ function DashboardPage() {
             aside={groups.dueToday.length > 0 ? `${groups.dueToday.length} due` : undefined}
           />
           {isPending ? (
-            <p className="text-sm text-foreground/50">Loading your day…</p>
+            <LoadingRows rows={2} />
+          ) : isError ? (
+            <ErrorNote onRetry={() => void refetch()} retrying={isRefetching} />
           ) : groups.dueToday.length === 0 ? (
             <EmptyState
               title="Nothing due today"
@@ -219,7 +228,9 @@ function DashboardPage() {
             aside={groups.upcoming.length > 0 ? `${groups.upcoming.length} items` : undefined}
           />
           {isPending ? (
-            <p className="text-sm text-foreground/50">Loading…</p>
+            <LoadingRows rows={3} />
+          ) : isError ? (
+            <ErrorNote onRetry={() => void refetch()} retrying={isRefetching} />
           ) : groups.upcoming.length === 0 ? (
             <EmptyState
               title="No upcoming work"
@@ -241,7 +252,9 @@ function DashboardPage() {
 
       <Panel className="mt-5">
         <PanelHeader title="This week" />
-        {groups.week.length === 0 ? (
+        {isPending ? (
+          <LoadingRows rows={2} />
+        ) : groups.week.length === 0 ? (
           <EmptyState
             title="A quiet week"
             description="Anything due in the next seven days gets grouped by day here."
@@ -266,7 +279,9 @@ function DashboardPage() {
 
       <Panel className="mt-5">
         <PanelHeader title="Courses" aside={courses.length > 0 ? `${courses.length}` : undefined} />
-        {courses.length === 0 ? (
+        {isPending ? (
+          <LoadingTiles />
+        ) : courses.length === 0 ? (
           <EmptyState
             title="No courses yet"
             description="Upload your course files and Syllo builds your semester from them."

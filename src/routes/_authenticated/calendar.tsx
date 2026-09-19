@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ErrorNote, LoadingRows } from "@/components/app/StatusNote";
 import { PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { Button } from "@/components/ui/app-button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -49,7 +50,13 @@ function CalendarPage() {
   const [selected, setSelected] = useState<PlannerItem | null>(null);
 
   // Same cache key as the dashboard — imported data refreshes both views.
-  const { data: planner, isPending } = useQuery({
+  const {
+    data: planner,
+    isPending,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["planner"],
     queryFn: () => fetchPlanner(),
   });
@@ -130,7 +137,15 @@ function CalendarPage() {
 
       {isPending ? (
         <Panel>
-          <p className="text-sm text-foreground/50">Loading your calendar…</p>
+          <LoadingRows rows={4} />
+        </Panel>
+      ) : isError ? (
+        <Panel>
+          <ErrorNote
+            title="We could not load your calendar"
+            onRetry={() => void refetch()}
+            retrying={isRefetching}
+          />
         </Panel>
       ) : items.length === 0 ? (
         <Panel>

@@ -5,9 +5,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ErrorNote } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
@@ -320,9 +322,17 @@ function ImportSemesterPage() {
         }
       />
 
-      <div className="grid gap-4">
+      <div className="grid gap-5">
         <Panel>
           <PanelHeader title="Course files" aside="One file per course" />
+          <ol className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/50">
+            {["Upload", "Processing", "Organized", "Done"].map((step, index) => (
+              <li key={step} className="flex items-center gap-2">
+                {index > 0 ? <span aria-hidden>→</span> : null}
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
           <div
             onDragOver={(event) => {
               event.preventDefault();
@@ -330,17 +340,23 @@ function ImportSemesterPage() {
             }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
-            className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+            className={`rounded-2xl border-2 border-dashed p-6 text-center transition-colors sm:p-8 ${
               dragging ? "border-brand bg-brand/5" : "border-border"
             }`}
           >
-            <p className="font-display text-lg text-foreground">Drop your course exports here</p>
-            <p className="mt-1 text-sm text-foreground/55">
+            <p className="font-display text-base text-foreground sm:text-lg">
+              Drop your course exports here
+            </p>
+            <p className="mx-auto mt-1 max-w-[46ch] text-pretty text-sm text-foreground/55">
               Everything after that is automatic: each file is read, understood and added to your
               semester.
             </p>
             <div className="mt-4">
-              <Button variant="brand" onClick={() => fileInputRef.current?.click()}>
+              <Button
+                variant="brand"
+                className="w-full sm:w-auto"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 Choose files
               </Button>
             </div>
@@ -420,36 +436,41 @@ function FinishedSummary({ summary }: { summary: Summary }) {
     queryFn: () => listAttentionItems(),
   });
 
-  const lines = [
+  const facts = [
     `${summary.complete} course${summary.complete === 1 ? "" : "s"} imported`,
-    `${summary.items} academic item${summary.items === 1 ? "" : "s"} found`,
+    `${summary.items} academic item${summary.items === 1 ? "" : "s"} added to your planner`,
     `${summary.exams} exam${summary.exams === 1 ? "" : "s"} found`,
-    // Counted only once the list is actually loaded, so it never briefly reads zero.
-    isPending || !attention
-      ? "Checking for anything that needs your attention…"
-      : `${attention.length} item${attention.length === 1 ? "" : "s"} need attention`,
   ];
 
   return (
-    <Panel>
-      <PanelHeader title="Import finished" aside="Saved to your semester" />
-      <ul className="space-y-1 text-sm text-foreground">
-        {lines.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-      {summary.failed > 0 ? (
-        <p className="mt-3 text-sm text-foreground/60">
-          {summary.failed} file{summary.failed === 1 ? "" : "s"} could not be read — use “Try this
-          file again” above.
-        </p>
-      ) : null}
-      <Link
-        to="/import-debug"
-        className="mt-3 inline-block text-xs text-foreground/40 underline underline-offset-4 hover:text-foreground/70"
-      >
-        Developer view
-      </Link>
+    <Panel className="border-brand/40">
+      <div className="flex items-start gap-3">
+        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
+        <div className="min-w-0">
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            All done — your semester is in Syllo.
+          </h2>
+          <p className="mt-1 text-sm text-foreground/60">{facts.join(" · ")}</p>
+          {/* Counted only once the list has loaded, so it never briefly reads zero. */}
+          {!isPending && attention && attention.length > 0 ? (
+            <p className="mt-1 text-sm text-foreground/60">
+              {attention.length} item{attention.length === 1 ? "" : "s"} still need a quick look
+              below.
+            </p>
+          ) : null}
+          {summary.failed > 0 ? (
+            <p className="mt-1 text-sm text-foreground/60">
+              {summary.failed} file{summary.failed === 1 ? "" : "s"} could not be read — use “Try
+              this file again” above.
+            </p>
+          ) : null}
+          <div className="mt-4">
+            <Button variant="brand" asChild>
+              <Link to="/dashboard">Go to my dashboard</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
     </Panel>
   );
 }
@@ -461,14 +482,15 @@ function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void
 
   return (
     <Panel>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <p className="truncate font-medium text-foreground">{item.fileName}</p>
-          <p className="text-xs text-foreground/45">
-            {formatSize(item.fileSize)} · file name, not course identity
-          </p>
+          <p className="text-xs text-foreground/45">{formatSize(item.fileSize)}</p>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[item.status]}`}>
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${statusTone[item.status]}`}
+        >
+          {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
           {statusLabel[item.status]}
         </span>
       </div>
@@ -493,18 +515,14 @@ function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void
         </div>
       ) : null}
 
-      {item.error ? (
-        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <p className="text-foreground">{item.error.message}</p>
-          <p className="mt-1 text-xs text-foreground/50">Reason: {item.error.code}</p>
-        </div>
-      ) : null}
-
       {item.status === "failed" ? (
         <div className="mt-4">
-          <Button onClick={onRetry} disabled={busy}>
-            Try this file again
-          </Button>
+          <ErrorNote
+            title="This file could not be imported"
+            description={item.error?.message ?? importErrorMessages.unknown}
+            onRetry={onRetry}
+            retrying={busy}
+          />
         </div>
       ) : null}
     </Panel>
@@ -544,17 +562,9 @@ function AttentionPanel() {
     }
   }
 
-  if (isLoading) return null;
-  if (items.length === 0) {
-    return (
-      <Panel>
-        <PanelHeader title="Needs attention" aside="Nothing outstanding" />
-        <p className="text-sm text-foreground/60">
-          Everything we read was clear enough to add to your planner.
-        </p>
-      </Panel>
-    );
-  }
+  // Nothing unresolved means nothing to show — ordinary imported work is never
+  // put in front of the student for approval.
+  if (isLoading || items.length === 0) return null;
 
   // Normal extracted data never asks for approval. Only unresolved conflicts surface here, and
   // they stay folded away behind a single line until the student opens them.
@@ -587,10 +597,10 @@ function AttentionPanel() {
       </p>
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Button onClick={() => void runBulk("high_confidence_assignments")} disabled={pending}>
+        <Button onClick={() => void runBulk("high_confidence_assignments")} loading={pending}>
           Approve all high-confidence assignments
         </Button>
-        <Button onClick={() => void runBulk("reviewed_items")} disabled={pending}>
+        <Button onClick={() => void runBulk("reviewed_items")} loading={pending}>
           Approve all reviewed items
         </Button>
       </div>
@@ -688,7 +698,7 @@ function AttentionRow({
         <Button
           variant="brand"
           onClick={() => void submit(edited ? "edit" : "approve")}
-          disabled={busy}
+          loading={busy}
         >
           {edited ? "Save and approve" : "Approve"}
         </Button>
