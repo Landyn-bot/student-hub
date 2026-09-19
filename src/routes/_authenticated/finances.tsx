@@ -99,7 +99,15 @@ function FinancesPage() {
       return;
     }
     addMutation.mutate(
-      { data: { direction, category: category as never, description, occurredOn, amount: parsedAmount } },
+      {
+        data: {
+          direction,
+          category: category as never,
+          description,
+          occurredOn,
+          amount: parsedAmount,
+        },
+      },
       {
         onSuccess: () => {
           setAmount("");
@@ -179,7 +187,10 @@ function FinancesPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Add an entry */}
             <Panel>
-              <PanelHeader title="Add an entry" aside={direction === "income" ? "Money in" : "Money out"} />
+              <PanelHeader
+                title="Add an entry"
+                aside={direction === "income" ? "Money in" : "Money out"}
+              />
               <form onSubmit={submit} className="space-y-4">
                 <div className="flex gap-2">
                   {(["expense", "income"] as const).map((option) => (
