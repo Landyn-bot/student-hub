@@ -43,7 +43,7 @@ function DashboardPage() {
         title="Your semester, kept in one glance."
         action={
           <Button variant="accent" asChild>
-            <Link to="/courses">+ Upload courses</Link>
+            <Link to="/import">+ Upload courses</Link>
           </Button>
         }
       />
