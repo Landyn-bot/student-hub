@@ -398,7 +398,7 @@ function ProgressSummary({ summary }: { summary: Summary }) {
 
 /** The plain-language result once every file has finished. */
 function FinishedSummary({ summary }: { summary: Summary }) {
-  const { data: attention = [] } = useQuery({
+  const { data: attention, isPending } = useQuery({
     queryKey: ["attention-items"],
     queryFn: () => listAttentionItems(),
   });
@@ -407,7 +407,10 @@ function FinishedSummary({ summary }: { summary: Summary }) {
     `${summary.complete} course${summary.complete === 1 ? "" : "s"} imported`,
     `${summary.items} academic item${summary.items === 1 ? "" : "s"} found`,
     `${summary.exams} exam${summary.exams === 1 ? "" : "s"} found`,
-    `${attention.length} item${attention.length === 1 ? "" : "s"} need attention`,
+    // Counted only once the list is actually loaded, so it never briefly reads zero.
+    isPending || !attention
+      ? "Checking for anything that needs your attention…"
+      : `${attention.length} item${attention.length === 1 ? "" : "s"} need attention`,
   ];
 
   return (
