@@ -69,7 +69,9 @@ export function toCourseContentPayload(
   parsed: ParsedEpub,
   chunks: EpubChunk[],
 ): CourseContentPayload {
-  const pathByChapterIndex = new Map(parsed.chapters.map((chapter) => [chapter.index, chapter.path]));
+  const pathByChapterIndex = new Map(
+    parsed.chapters.map((chapter) => [chapter.index, chapter.path]),
+  );
 
   return {
     sourceName,
