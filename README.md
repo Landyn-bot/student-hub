@@ -2,6 +2,14 @@
 
 College Survival Dashboard is a hackathon MVP for turning authorized Canvas course EPUB exports into an evidence-backed semester view. The planned experience combines courses, assignments, assessments, due dates, policies, office hours, source evidence, and an Ask My Semester assistant that answers only from imported course material.
 
+Claude read our repo's stack and wrote `src/lib/epub.ts`, a lightweight parser with `jszip` as its only dependency. It:
+
+- unpacks the EPUB and reads its metadata, table of contents, and reading order
+- converts each chapter's XHTML into clean text, keeping headings, lists, tables, and code blocks
+- splits chapters into chunks sized for the model's context window
+
+Claude also wrote a temporary `/epub-test` page for checking the output in the browser. It tested the parser on a real Canvas course export and on a synthetic EPUB, and typechecked it in strict TypeScript. Our team then integrated the code into the project through Lovable and reviewed the results.
+
 ## Documentation
 
 The active project documentation is in [`docs/`](docs/). [`docs/ROADMAP.md`](docs/ROADMAP.md) is the single authoritative implementation roadmap.
