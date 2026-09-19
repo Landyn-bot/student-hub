@@ -29,6 +29,13 @@
       "when": 1789843038081,
       "tag": "0003_add_onboarding_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789843059606,
+      "tag": "0004_add_complete_onboarding_function",
+      "breakpoints": true
     }
   ]
 }

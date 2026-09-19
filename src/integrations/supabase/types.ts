@@ -777,7 +777,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_onboarding: {
+        Args: {
+          _default_reminder_hours: number
+          _ends_on: string
+          _planning_style: string
+          _school: string
+          _starts_on: string
+          _term_name: string
+          _week_starts_on: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
