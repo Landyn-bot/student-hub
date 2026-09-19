@@ -703,6 +703,85 @@ export type Database = {
           },
         ]
       }
+      item_conflicts: {
+        Row: {
+          chosen_value: string | null
+          course_id: string | null
+          created_at: string
+          detail: string | null
+          existing_document_id: string | null
+          existing_source_text: string | null
+          existing_value: string | null
+          field: string
+          id: string
+          incoming_document_id: string | null
+          incoming_source_text: string | null
+          incoming_value: string | null
+          item_id: string | null
+          item_kind: string
+          resolution: string
+          user_id: string
+        }
+        Insert: {
+          chosen_value?: string | null
+          course_id?: string | null
+          created_at?: string
+          detail?: string | null
+          existing_document_id?: string | null
+          existing_source_text?: string | null
+          existing_value?: string | null
+          field?: string
+          id?: string
+          incoming_document_id?: string | null
+          incoming_source_text?: string | null
+          incoming_value?: string | null
+          item_id?: string | null
+          item_kind: string
+          resolution: string
+          user_id: string
+        }
+        Update: {
+          chosen_value?: string | null
+          course_id?: string | null
+          created_at?: string
+          detail?: string | null
+          existing_document_id?: string | null
+          existing_source_text?: string | null
+          existing_value?: string | null
+          field?: string
+          id?: string
+          incoming_document_id?: string | null
+          incoming_source_text?: string | null
+          incoming_value?: string | null
+          item_id?: string | null
+          item_kind?: string
+          resolution?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_conflicts_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_conflicts_existing_document_id_fkey"
+            columns: ["existing_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_conflicts_incoming_document_id_fkey"
+            columns: ["incoming_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
