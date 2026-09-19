@@ -600,6 +600,22 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         });
       }
 
+      // An item can be flagged on insert and then settled by a later chunk that merges or
+      // supersedes it, so count what is actually still unresolved instead of trusting the
+      // running tally.
+      const attentionCounts = await Promise.all(
+        reviewKinds.map(async (kind) => {
+          const { count } = await supabase
+            .from(tableFor[kind])
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", userId)
+            .eq("course_id", courseId)
+            .eq("review_status", "needs_attention");
+          return count ?? 0;
+        }),
+      );
+      needsAttention = attentionCounts.reduce((sum, value) => sum + value, 0);
+
       console.log("[semester-import] saved", {
         userId,
         courseId,
