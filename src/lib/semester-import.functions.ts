@@ -43,17 +43,7 @@ const itemSchema = z.object({
   source: sourceSchema,
 });
 
-const listKeys = [
-  "assignments",
-  "exams",
-  "quizzes",
-  "projects",
-  "readings",
-  "important_dates",
-  "grading",
-  "policies",
-  "other_important_information",
-] as const;
+const itemList = z.array(itemSchema).default([]);
 
 const saveInputSchema = z.object({
   importId: z.string().min(1).max(200),
@@ -68,7 +58,15 @@ const saveInputSchema = z.object({
       instructor: z.string().nullable(),
       semester: z.string().nullable(),
     }),
-    ...Object.fromEntries(listKeys.map((key) => [key, z.array(itemSchema).default([])])),
+    assignments: itemList,
+    exams: itemList,
+    quizzes: itemList,
+    projects: itemList,
+    readings: itemList,
+    important_dates: itemList,
+    grading: itemList,
+    policies: itemList,
+    other_important_information: itemList,
   }),
 });
 
