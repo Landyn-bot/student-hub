@@ -639,6 +639,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           default_reminder_hours: number
+          email_reminders: boolean
           full_name: string | null
           id: string
           onboarding_completed_at: string | null
@@ -651,6 +652,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           default_reminder_hours?: number
+          email_reminders?: boolean
           full_name?: string | null
           id: string
           onboarding_completed_at?: string | null
@@ -663,6 +665,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           default_reminder_hours?: number
+          email_reminders?: boolean
           full_name?: string | null
           id?: string
           onboarding_completed_at?: string | null
@@ -780,6 +783,7 @@ export type Database = {
       complete_onboarding: {
         Args: {
           _default_reminder_hours: number
+          _email_reminders?: boolean
           _ends_on: string
           _planning_style: string
           _school: string
