@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 
+import { CourseForm } from "@/components/app/CourseForm";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
 import { Panel } from "@/components/ui/panel-surface";
-import { listCourses } from "@/lib/courses.functions";
+import { listCourses, type Course } from "@/lib/courses.functions";
 import { coursePalette } from "@/lib/course-colors";
 import { cn } from "@/lib/utils";
 
