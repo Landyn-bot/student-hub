@@ -350,11 +350,13 @@ function DashboardPage() {
           />
         ) : (
           <div className="space-y-4">
-            {groups.week.map(([day, items]) => (
-              <div key={day}>
-                <h3 className="mb-2 text-[11px] uppercase tracking-[0.12em] text-foreground/50">
+            {groups.week.map(([day, items], index) => (
+              <div key={day} className="rise-in" style={{ animationDelay: `${index * 60}ms` }}>
+                <h3 className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-foreground/50">
+                  <span className="h-px w-4 bg-gradient-to-r from-course-teal to-transparent" />
                   {formatDay(day)}
                 </h3>
+
                 <ul className="space-y-2">
                   {items.map((item) => (
                     <ItemRow key={item.id} item={item} onOpen={setSelected} />
