@@ -12,7 +12,7 @@ import { listCourses, type Course } from "@/lib/courses.functions";
 import { coursePalette } from "@/lib/course-colors";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/courses")({
+export const Route = createFileRoute("/_authenticated/courses/")({
   head: () => ({
     meta: [
       { title: "Courses — Syllo" },
