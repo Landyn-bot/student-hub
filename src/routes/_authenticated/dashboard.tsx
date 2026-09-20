@@ -442,11 +442,18 @@ function ItemRow({
         type="button"
         onClick={() => onOpen(item)}
         className={cn(
-          "inset-tile ml-2 flex w-full min-w-0 items-stretch gap-3 overflow-hidden bg-background text-left transition",
+          "inset-tile tile-lift group ml-2 flex w-full min-w-0 items-stretch gap-3 overflow-hidden bg-background text-left",
           palette.hover,
         )}
       >
-        <span className={cn("w-1.5 shrink-0 self-stretch", palette.solid)} aria-hidden />
+        <span
+          className={cn(
+            "w-1.5 shrink-0 self-stretch transition-all duration-200 group-hover:w-2.5",
+            palette.solid,
+          )}
+          aria-hidden
+        />
+
         {/* flex-1 keeps the text column bounded so the truncation below can take effect. */}
         <span className="min-w-0 flex-1 py-3">
           <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>
