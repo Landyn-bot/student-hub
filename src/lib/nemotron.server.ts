@@ -48,9 +48,23 @@ export type NemotronResult = {
 
 type NimChatCompletion = {
   model?: string;
-  choices?: Array<{ message?: { content?: unknown } }>;
+  choices?: Array<{ message?: { content?: unknown; reasoning_content?: unknown } }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 };
+
+/**
+ * Removes the model's internal reasoning from a reply. Nemotron models can
+ * wrap their chain-of-thought in <think>…</think> blocks inside the content;
+ * students should only ever see the final answer, never the working. An
+ * unclosed opening tag means the reasoning was cut off mid-block, so
+ * everything from that tag onward is dropped as well.
+ */
+export function stripModelThinking(text: string): string {
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const dangling = cleaned.search(/<think>/i);
+  if (dangling !== -1) cleaned = cleaned.slice(0, dangling);
+  return cleaned.trim();
+}
 
 /** Human-readable failure message for a kind; never contains credentials. */
 function messageFor(kind: NemotronFailureKind, status?: number): string {
@@ -172,8 +186,11 @@ async function requestOnce(request: NemotronRequest): Promise<NemotronResult> {
     throw new NemotronError("malformed_response", messageFor("malformed_response"));
   }
 
-  const content = payload.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || content.trim().length === 0) {
+  // reasoning_content, when present, carries the chain-of-thought separately;
+  // it is never read. Inline <think> blocks are stripped from the visible text.
+  const raw = payload.choices?.[0]?.message?.content;
+  const content = typeof raw === "string" ? stripModelThinking(raw) : "";
+  if (content.length === 0) {
     console.error(`[nemotron] response missing text after ${latencyMs}ms`, {
       model,
       keys: Object.keys(payload ?? {}),

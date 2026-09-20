@@ -74,12 +74,18 @@ export const getAssistantChat = createServerFn({ method: "GET" })
       .eq("conversation_id", conversation.id)
       .order("created_at", { ascending: true });
 
+    // Older answers may still carry the model's <think> reasoning; strip it so
+    // students only ever see the final answer, never the working.
+    const { stripModelThinking } = await import("@/lib/nemotron.server");
     const messages: AssistantMessage[] = (data ?? [])
       .filter((row) => row.role === "user" || row.role === "assistant")
       .map((row) => ({
         id: row.id as string,
         role: row.role as "user" | "assistant",
-        content: row.content as string,
+        content:
+          row.role === "assistant"
+            ? stripModelThinking(row.content as string)
+            : (row.content as string),
         createdAt: row.created_at as string,
       }));
 
