@@ -47,19 +47,23 @@ function CoursesPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Courses" title="Your course shelf.">
-        {!isPending && !isError ? (
-          <Button
-            variant="brand"
-            onClick={() => {
-              setEditing(null);
-              setAdding((open) => !open);
-            }}
-          >
-            {adding ? "Close" : "+ Add course"}
-          </Button>
-        ) : null}
-      </PageHeader>
+      <PageHeader
+        eyebrow="Courses"
+        title="Your course shelf."
+        action={
+          !isPending && !isError ? (
+            <Button
+              variant="brand"
+              onClick={() => {
+                setEditing(null);
+                setAdding((open) => !open);
+              }}
+            >
+              {adding ? "Close" : "+ Add course"}
+            </Button>
+          ) : null
+        }
+      />
 
       {adding ? (
         <Panel className="mb-4 p-6">
