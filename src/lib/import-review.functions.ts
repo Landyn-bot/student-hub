@@ -14,10 +14,9 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  persistCourseImport,
-  type SaveCourseImportInput,
-  type SaveCourseImportResult,
+import type {
+  SaveCourseImportInput,
+  SaveCourseImportResult,
 } from "@/lib/semester-import.functions";
 
 type Db = SupabaseClient<Database>;
@@ -567,6 +566,8 @@ export const confirmImportBatch = createServerFn({ method: "POST" })
         ? ((batch.ir as { metadata?: { title?: string | null } }).metadata ?? null)
         : null;
 
+    // Server-only import: the writer must never be reachable from a client bundle.
+    const { persistCourseImport } = await import("@/lib/server/course-import.server");
     const saved: SaveCourseImportResult = await persistCourseImport(supabase, userId, {
       importId: `imp_${batch.id}`,
       sourceName: batch.filename,
