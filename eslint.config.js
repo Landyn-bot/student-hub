@@ -7,8 +7,9 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    // Lovable Cloud owns and regenerates its integration layer.
-    ignores: ["dist", ".output", ".vinxi", "src/integrations/supabase/**"],
+    // Lovable Cloud owns and regenerates its integration layer. Edge functions run on Deno,
+    // with their own globals and tests, so the browser lint rules do not apply to them.
+    ignores: ["dist", ".output", ".vinxi", "src/integrations/supabase/**", "supabase/functions/**"],
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

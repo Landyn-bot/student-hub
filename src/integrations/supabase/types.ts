@@ -32,6 +32,7 @@ export type Database = {
           priority: string
           review_status: string
           source_chunk_key: string | null
+          source_section: string | null
           source_document_id: string | null
           source_page: number | null
           source_text: string | null
@@ -58,6 +59,7 @@ export type Database = {
           priority?: string
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -84,6 +86,7 @@ export type Database = {
           priority?: string
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -172,6 +175,7 @@ export type Database = {
           recurrence_rule: string | null
           review_status: string
           source_chunk_key: string | null
+          source_section: string | null
           source_document_id: string | null
           source_text: string | null
           starts_at: string | null
@@ -198,6 +202,7 @@ export type Database = {
           recurrence_rule?: string | null
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
           source_document_id?: string | null
           source_text?: string | null
           starts_at?: string | null
@@ -224,6 +229,7 @@ export type Database = {
           recurrence_rule?: string | null
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
           source_document_id?: string | null
           source_text?: string | null
           starts_at?: string | null
@@ -360,6 +366,87 @@ export type Database = {
           },
         ]
       }
+      class_meetings: {
+        Row: {
+          ai_confidence: number | null
+          ai_generated: boolean
+          course_id: string | null
+          created_at: string
+          edited_at: string | null
+          edited_by_user: boolean
+          end_time: string | null
+          id: string
+          location: string | null
+          review_status: string
+          source_chunk_key: string | null
+          source_document_id: string | null
+          source_section: string | null
+          source_text: string | null
+          start_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_generated?: boolean
+          course_id?: string | null
+          created_at?: string
+          edited_at?: string | null
+          edited_by_user?: boolean
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          review_status?: string
+          source_chunk_key?: string | null
+          source_document_id?: string | null
+          source_section?: string | null
+          source_text?: string | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          weekday: number
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_generated?: boolean
+          course_id?: string | null
+          created_at?: string
+          edited_at?: string | null
+          edited_by_user?: boolean
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          review_status?: string
+          source_chunk_key?: string | null
+          source_document_id?: string | null
+          source_section?: string | null
+          source_text?: string | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_meetings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_meetings_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "course_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_documents: {
         Row: {
           course_id: string | null
@@ -427,6 +514,8 @@ export type Database = {
           policy_type: string
           review_status: string
           source_chunk_key: string | null
+          source_section: string | null
+          parameters: Json | null
           source_document_id: string | null
           source_page: number | null
           source_text: string | null
@@ -447,6 +536,8 @@ export type Database = {
           policy_type?: string
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
+          parameters?: Json | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -467,6 +558,8 @@ export type Database = {
           policy_type?: string
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
+          parameters?: Json | null
           source_document_id?: string | null
           source_page?: number | null
           source_text?: string | null
@@ -562,6 +655,7 @@ export type Database = {
           points: number | null
           review_status: string
           source_chunk_key: string | null
+          source_section: string | null
           source_document_id: string | null
           source_text: string | null
           start_time: string | null
@@ -587,6 +681,7 @@ export type Database = {
           points?: number | null
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
           source_document_id?: string | null
           source_text?: string | null
           start_time?: string | null
@@ -612,6 +707,7 @@ export type Database = {
           points?: number | null
           review_status?: string
           source_chunk_key?: string | null
+          source_section?: string | null
           source_document_id?: string | null
           source_text?: string | null
           start_time?: string | null
@@ -699,6 +795,193 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_batches: {
+        Row: {
+          chunks_done: number
+          chunks_failed: number
+          chunks_total: number
+          confirmed_at: string | null
+          confirmed_course_id: string | null
+          course_code: string | null
+          course_instructor: string | null
+          course_name: string | null
+          course_term: string | null
+          created_at: string
+          done_chunk_ids: string[]
+          error_code: string | null
+          error_message: string | null
+          file_hash: string
+          file_size: number
+          filename: string
+          heartbeat_at: string
+          id: string
+          ir: Json | null
+          model: string | null
+          source_kind: string
+          stage: string
+          status: string
+          updated_at: string
+          user_id: string
+          warnings: Json
+        }
+        Insert: {
+          chunks_done?: number
+          chunks_failed?: number
+          chunks_total?: number
+          confirmed_at?: string | null
+          confirmed_course_id?: string | null
+          course_code?: string | null
+          course_instructor?: string | null
+          course_name?: string | null
+          course_term?: string | null
+          created_at?: string
+          done_chunk_ids?: string[]
+          error_code?: string | null
+          error_message?: string | null
+          file_hash: string
+          file_size?: number
+          filename: string
+          heartbeat_at?: string
+          id?: string
+          ir?: Json | null
+          model?: string | null
+          source_kind: string
+          stage?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          warnings?: Json
+        }
+        Update: {
+          chunks_done?: number
+          chunks_failed?: number
+          chunks_total?: number
+          confirmed_at?: string | null
+          confirmed_course_id?: string | null
+          course_code?: string | null
+          course_instructor?: string | null
+          course_name?: string | null
+          course_term?: string | null
+          created_at?: string
+          done_chunk_ids?: string[]
+          error_code?: string | null
+          error_message?: string | null
+          file_hash?: string
+          file_size?: number
+          filename?: string
+          heartbeat_at?: string
+          id?: string
+          ir?: Json | null
+          model?: string | null
+          source_kind?: string
+          stage?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_batches_confirmed_course_id_fkey"
+            columns: ["confirmed_course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_staged_items: {
+        Row: {
+          added_by_user: boolean
+          batch_id: string
+          confidence: number | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          id: string
+          item_date: string | null
+          kind: string
+          location: string | null
+          needs_review: boolean
+          parameters: Json | null
+          points: number | null
+          review_reason: string | null
+          source_chunk_id: string | null
+          source_quote: string | null
+          source_section: string | null
+          start_time: string | null
+          subtype: string
+          title: string
+          updated_at: string
+          user_id: string
+          user_status: string
+          weekdays: number[] | null
+          weight: number | null
+        }
+        Insert: {
+          added_by_user?: boolean
+          batch_id: string
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          item_date?: string | null
+          kind: string
+          location?: string | null
+          needs_review?: boolean
+          parameters?: Json | null
+          points?: number | null
+          review_reason?: string | null
+          source_chunk_id?: string | null
+          source_quote?: string | null
+          source_section?: string | null
+          start_time?: string | null
+          subtype?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          user_status?: string
+          weekdays?: number[] | null
+          weight?: number | null
+        }
+        Update: {
+          added_by_user?: boolean
+          batch_id?: string
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          item_date?: string | null
+          kind?: string
+          location?: string | null
+          needs_review?: boolean
+          parameters?: Json | null
+          points?: number | null
+          review_reason?: string | null
+          source_chunk_id?: string | null
+          source_quote?: string | null
+          source_section?: string | null
+          start_time?: string | null
+          subtype?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          user_status?: string
+          weekdays?: number[] | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_staged_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
         ]

@@ -27,6 +27,14 @@ The active project documentation is in [`docs/`](docs/). [`docs/ROADMAP.md`](doc
 - [Evaluation](docs/SCORING.md)
 - [Sources and decisions](docs/SOURCES.md)
 
+## Course Import Pipeline
+
+A Canvas `.epub` export flows through: upload → `import-epub` edge function (validates and safely unpacks the archive, reads the manifest and spine in order, normalises the pages, sends only the normalised text to NVIDIA Nemotron, validates the JSON it returns) → staged records → the student's review screen (`/import-review`) → confirm → dashboard. Nothing reaches the dashboard tables until the student confirms.
+
+- Function: [`supabase/functions/import-epub/`](supabase/functions/import-epub/). Run its tests with `deno test --config supabase/functions/import-epub/deno.json` from the repository root.
+- Migration: [`drizzle/migrations/0009_import_staging_and_class_meetings.sql`](drizzle/migrations/0009_import_staging_and_class_meetings.sql) adds the staging tables and `class_meetings`.
+- Secrets (set in the Supabase project, never in the repository): `NVIDIA_API_KEY`; optionally `NVIDIA_NEMOTRON_MODEL` and `NVIDIA_BASE_URL`.
+
 ## Current Repository State
 
 The repository currently contains a Lovable-generated React and TypeScript frontend using TanStack Start/Vite tooling, existing Supabase integrations, and PostgreSQL-oriented Drizzle configuration. These technologies have not been removed or migrated by the documentation setup.
