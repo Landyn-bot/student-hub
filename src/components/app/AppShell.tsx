@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/app-button";
 import { supabase } from "@/integrations/supabase/client";
+import { setGuestMode } from "@/lib/guest/mode";
 
 import { SidebarNav } from "./SidebarNav";
 
