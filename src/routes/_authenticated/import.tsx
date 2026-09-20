@@ -251,8 +251,8 @@ function CanvasTutorial() {
           </ol>
           <p className="mt-4 text-sm text-foreground/55">
             Once you have a .epub for each class, drop them in the box below — Syllo takes it from
-            there. No Canvas export? A syllabus PDF, a screenshot of a schedule or pasted text
-            works just as well.
+            there. No Canvas export? A syllabus PDF, a screenshot of a schedule or pasted text works
+            just as well.
           </p>
         </div>
       ) : null}
