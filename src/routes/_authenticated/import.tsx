@@ -146,6 +146,98 @@ function newEntry(file: File): CourseImport {
 }
 
 /* ------------------------------------------------------------------ */
+/* Canvas export tutorial                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A collapsible, step-by-step guide for exporting a Canvas course as an EPUB.
+ * Shown by default so first-time students find it; collapses to one line
+ * once they have the hang of it.
+ */
+function CanvasTutorial() {
+  const [open, setOpen] = useState(true);
+
+  const steps: { icon: typeof UserRound; title: string; body: string }[] = [
+    {
+      icon: UserRound,
+      title: "Open Canvas and click your profile",
+      body: "Sign in to your school's Canvas site. In the left navigation rail, click the Account (profile) icon at the very bottom.",
+    },
+    {
+      icon: Settings,
+      title: "Open Settings",
+      body: "From the Account menu, choose Settings.",
+    },
+    {
+      icon: Download,
+      title: "Click “Download Course Content”",
+      body: "On the right side of the Settings page, under the heading “Download Course Content”, choose the course you want and click the Generate button. Canvas builds the EPUB for that course.",
+    },
+    {
+      icon: FileText,
+      title: "Download the .epub file",
+      body: "When Canvas finishes generating, click the download link to save the .epub file to your computer. Repeat the steps above for each class you want to bring into Syllo — one file per course.",
+    },
+  ];
+
+  return (
+    <Panel>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-2">
+          <FileText className="size-4 text-brand" aria-hidden />
+          <span className="font-display text-lg font-semibold text-foreground">
+            How to get your course files from Canvas
+          </span>
+        </div>
+        <ChevronDown
+          className={`size-5 shrink-0 text-foreground/50 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden
+        />
+      </button>
+
+      {open ? (
+        <div className="mt-5">
+          <p className="mb-4 max-w-[60ch] text-pretty text-sm text-foreground/60">
+            Syllo reads the EPUB export Canvas builds for each of your courses. Here is how to grab
+            one — you only do this once per course, and each class needs its own file.
+          </p>
+          <ol className="grid gap-4 sm:grid-cols-2">
+            {steps.map((step, index) => (
+              <li
+                key={step.title}
+                className="flex gap-3 rounded-xl border border-border bg-surface/60 p-4"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 font-display text-sm font-semibold text-brand">
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 font-medium text-foreground">
+                    <step.icon className="size-4 text-foreground/50" aria-hidden />
+                    {step.title}
+                  </p>
+                  <p className="mt-1 text-pretty text-sm text-foreground/60">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-4 text-sm text-foreground/55">
+            Once you have a .epub for each class, drop them in the box below — Syllo takes it from
+            there.
+          </p>
+        </div>
+      ) : null}
+    </Panel>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
