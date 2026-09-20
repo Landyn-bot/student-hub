@@ -97,7 +97,7 @@ function DashboardPage() {
     const weekEnd = addDays(today, 7);
     const items = planner?.items ?? [];
     const dated = items
-      .filter((item): item is PlannerItem & { date: string } => Boolean(item.date))
+      .filter((item): item is PlannerItem & { date: string } => Boolean(item.date) && !item.done)
       .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""));
 
     const dueToday = dated.filter((item) => item.date === today);
