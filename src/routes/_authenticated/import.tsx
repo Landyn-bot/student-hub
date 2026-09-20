@@ -493,6 +493,12 @@ function ImportSemesterPage() {
       // Organizing: group the extracted facts under their course and write them to the
       // student's own semester data. Provenance travels with every row.
       patch(entry.importId, { status: "organizing" });
+      // Before anything is written, ask the student for the course's official name —
+      // Canvas export titles are messy, so they get the final say.
+      const confirmedName = await askCourseName(
+        entry.importId,
+        guessCourseName(extraction, entry.fileName),
+      );
       try {
         const documentText = normalized.chunks
           .map((chunk) => chunk.text)
@@ -505,6 +511,7 @@ function ImportSemesterPage() {
             sourceName: entry.fileName,
             documentText,
             documentTitle: normalized.metadata.title,
+            courseNameOverride: confirmedName,
             extraction,
           },
         });
