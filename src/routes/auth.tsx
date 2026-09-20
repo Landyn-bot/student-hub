@@ -76,6 +76,7 @@ function AuthPage() {
         });
         if (error) throw error;
       }
+      setGuestMode(false);
       navigate({ to: "/dashboard", replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
@@ -95,6 +96,7 @@ function AuthPage() {
     if (result.redirected) {
       return;
     }
+    setGuestMode(false);
     navigate({ to: "/dashboard", replace: true });
   }
 
@@ -170,6 +172,13 @@ function AuthPage() {
           <Button variant="outline" size="lg" className="w-full" onClick={handleGoogle}>
             Continue with Google
           </Button>
+
+          <Button variant="ghost" size="lg" className="mt-2 w-full" onClick={continueAsGuest}>
+            Continue without an account
+          </Button>
+          <p className="mt-2 text-center text-xs text-foreground/45">
+            Your work is saved in this browser only. Importing course files needs an account.
+          </p>
 
           <p className="mt-6 text-center text-sm text-foreground/55">
             {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
