@@ -23,11 +23,13 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
 import type { ChunkTrace, CourseExtraction } from "@/lib/course-content";
 import { recordImportRun } from "@/lib/import-store";
+import { readDocumentText } from "@/lib/document-intake.functions";
 import {
   CourseImportError,
   createImportId,
   importErrorMessages,
   normalizeEpubImport,
+  normalizeTextImport,
   toAnalysisPayload,
   toImportErrorCode,
   type ImportErrorCode,
@@ -73,9 +75,15 @@ type ImportStatus = "uploading" | "parsing" | "analyzing" | "organizing" | "comp
 
 type ImportFailure = { code: ImportErrorCode; message: string };
 
+/** Where the text comes from. Everything downstream is identical once it is text. */
+type SourceKind = "epub" | "document" | "text";
+
 type CourseImport = {
   importId: string;
-  file: File;
+  kind: SourceKind;
+  /** Null for text pasted straight into the page. */
+  file: File | null;
+  pastedText: string | null;
   fileName: string;
   fileSize: number;
   status: ImportStatus;
@@ -111,6 +119,8 @@ const MAX_CHARS_PER_CHUNK = 12000;
 const ANALYSIS_CONCURRENCY = 2;
 /** Upper bound on the stored copy of the document text. */
 const MAX_DOCUMENT_CHARS = 400_000;
+/** Largest single PDF or image we send off to be read. */
+const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -128,10 +138,22 @@ function toFailure(error: unknown): ImportFailure {
   };
 }
 
-function newEntry(file: File): CourseImport {
+/** Decides how a chosen file will be turned into text. */
+function kindForFile(file: File): SourceKind | null {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".epub")) return "epub";
+  if (name.endsWith(".txt") || name.endsWith(".md")) return "text";
+  if (name.endsWith(".pdf") || file.type.startsWith("image/")) return "document";
+  if (/\.(png|jpe?g|webp|heic|gif)$/.test(name)) return "document";
+  return null;
+}
+
+function newEntry(file: File, kind: SourceKind): CourseImport {
   return {
     importId: createImportId(),
+    kind,
     file,
+    pastedText: null,
     fileName: file.name,
     fileSize: file.size,
     status: "uploading",
@@ -229,7 +251,8 @@ function CanvasTutorial() {
           </ol>
           <p className="mt-4 text-sm text-foreground/55">
             Once you have a .epub for each class, drop them in the box below — Syllo takes it from
-            there.
+            there. No Canvas export? A syllabus PDF, a screenshot of a schedule or pasted text works
+            just as well.
           </p>
         </div>
       ) : null}
@@ -241,8 +264,40 @@ function CanvasTutorial() {
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
+/** An entry for text the student pasted in rather than uploaded. */
+function newPastedEntry(text: string): CourseImport {
+  const stamp = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return {
+    importId: createImportId(),
+    kind: "text",
+    file: null,
+    pastedText: text,
+    fileName: `Pasted text (${stamp})`,
+    fileSize: text.length,
+    status: "uploading",
+    normalized: null,
+    extraction: null,
+    courseName: null,
+    itemsSaved: 0,
+    examsSaved: 0,
+    needsAttention: 0,
+    error: null,
+  };
+}
+
+/** Reads a file into a data URL so it can be posted to Syllo's own reading endpoint. */
+function toDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("The file could not be read."));
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(file);
+  });
+}
+
 function ImportSemesterPage() {
   const analyze = useServerFn(analyzeCourseContentStructured);
+  const readDocument = useServerFn(readDocumentText);
   const save = useServerFn(saveCourseImport);
   const queryClient = useQueryClient();
 
@@ -263,9 +318,43 @@ function ImportSemesterPage() {
 
       let normalized: NormalizedCourseImport;
       try {
-        const parsed = await parseEpub(await entry.file.arrayBuffer());
-        const chunks = chunkEpub(parsed, { maxChars: MAX_CHARS_PER_CHUNK });
-        normalized = normalizeEpubImport(entry.fileName, parsed, chunks, entry.importId);
+        if (entry.kind === "epub") {
+          const parsed = await parseEpub(await entry.file!.arrayBuffer());
+          const chunks = chunkEpub(parsed, { maxChars: MAX_CHARS_PER_CHUNK });
+          normalized = normalizeEpubImport(entry.fileName, parsed, chunks, entry.importId);
+        } else {
+          // PDFs and screenshots are read on the server; text files and pasted text
+          // need no reading step at all. Either way we end up with plain text.
+          let text: string;
+          if (entry.kind === "text") {
+            text = entry.pastedText ?? (await entry.file!.text());
+          } else {
+            if (entry.file!.size > MAX_DOCUMENT_BYTES) {
+              throw new CourseImportError(
+                "parser_failure",
+                "That file is larger than 15 MB. Try splitting it up.",
+              );
+            }
+            const read = await readDocument({
+              data: {
+                fileName: entry.fileName,
+                mimeType: entry.file!.type || "application/pdf",
+                dataUrl: await toDataUrl(entry.file!),
+              },
+            });
+            if (!read.ok) {
+              throw new CourseImportError(toImportErrorCode(read.kind), read.error);
+            }
+            text = read.text;
+          }
+          if (text.trim().length < 20) {
+            throw new CourseImportError("no_readable_content");
+          }
+          normalized = normalizeTextImport(entry.fileName, text, {
+            importId: entry.importId,
+            maxChars: MAX_CHARS_PER_CHUNK,
+          });
+        }
         patch(entry.importId, { normalized });
       } catch (error) {
         patch(entry.importId, { status: "failed", error: toFailure(error) });
@@ -354,7 +443,7 @@ function ImportSemesterPage() {
         });
       }
     },
-    [analyze, patch, queryClient, save],
+    [analyze, patch, queryClient, readDocument, save],
   );
 
   /** Run a set of files with bounded concurrency; each one succeeds or fails on its own. */
@@ -375,14 +464,25 @@ function ImportSemesterPage() {
 
   const addFiles = useCallback(
     (fileList: FileList | File[]) => {
-      const files = Array.from(fileList).filter((file) =>
-        file.name.toLowerCase().endsWith(".epub"),
-      );
-      if (files.length === 0) return;
-
-      const entries = files.map(newEntry);
+      const entries = Array.from(fileList)
+        .map((file) => {
+          const kind = kindForFile(file);
+          return kind ? newEntry(file, kind) : null;
+        })
+        .filter((entry): entry is CourseImport => entry !== null);
+      if (entries.length === 0) return;
       setImports((prev) => [...prev, ...entries]);
       void runAll(entries);
+    },
+    [runAll],
+  );
+
+  /** Text typed or pasted straight into the page follows the identical pipeline. */
+  const addPastedText = useCallback(
+    (text: string) => {
+      const entry = newPastedEntry(text);
+      setImports((prev) => [...prev, entry]);
+      void runAll([entry]);
     },
     [runAll],
   );
@@ -426,7 +526,7 @@ function ImportSemesterPage() {
         <CanvasTutorial />
 
         <Panel>
-          <PanelHeader title="Course files" aside="One file per course" />
+          <PanelHeader title="Course files" aside="EPUB · PDF · image · text" />
           <ol className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/50">
             {["Upload", "Processing", "Organized", "Done"].map((step, index) => (
               <li key={step} className="flex items-center gap-2">
@@ -447,11 +547,11 @@ function ImportSemesterPage() {
             }`}
           >
             <p className="font-display text-base text-foreground sm:text-lg">
-              Drop your course exports here
+              Drop your course files here
             </p>
             <p className="mx-auto mt-1 max-w-[46ch] text-pretty text-sm text-foreground/55">
-              Everything after that is automatic: each file is read, understood and added to your
-              semester.
+              Canvas exports, syllabus PDFs, screenshots or photos of a schedule — each one is read,
+              understood and added to your semester automatically.
             </p>
             <div className="mt-4">
               <Button
@@ -466,7 +566,7 @@ function ImportSemesterPage() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".epub,application/epub+zip"
+              accept=".epub,.pdf,.txt,.md,.png,.jpg,.jpeg,.webp,application/epub+zip,application/pdf,image/*,text/plain"
               className="hidden"
               onChange={(event) => {
                 if (event.target.files) addFiles(event.target.files);
@@ -477,6 +577,8 @@ function ImportSemesterPage() {
 
           {imports.length > 0 ? <ProgressSummary summary={summary} /> : null}
         </Panel>
+
+        <PasteTextPanel onSubmit={(text) => addPastedText(text)} />
 
         {imports.map((item) => (
           <ImportCard key={item.importId} item={item} onRetry={() => void runImport(item)} />
@@ -493,6 +595,58 @@ function ImportSemesterPage() {
 /* ------------------------------------------------------------------ */
 /* Pieces                                                              */
 /* ------------------------------------------------------------------ */
+
+/** A small box for pasting syllabus text or an email straight from Canvas. */
+function PasteTextPanel({ onSubmit }: { onSubmit: (text: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+
+  if (!open) {
+    return (
+      <Panel>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-left font-display text-base text-foreground underline-offset-4 hover:underline"
+        >
+          Or paste course text instead
+        </button>
+        <p className="mt-1 text-sm text-foreground/60">
+          Copy a syllabus, schedule or email and Syllo will pull the dates out of it.
+        </p>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel>
+      <PanelHeader title="Paste course text" aside="Syllabus, schedule or email" />
+      <textarea
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        rows={8}
+        placeholder="Paste the text here — assignment names, due dates, exam dates, policies…"
+        className="w-full resize-y rounded-xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-brand"
+      />
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          variant="brand"
+          disabled={text.trim().length < 20}
+          onClick={() => {
+            onSubmit(text.trim());
+            setText("");
+            setOpen(false);
+          }}
+        >
+          Add this text
+        </Button>
+        <Button variant="soft" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </Panel>
+  );
+}
 
 type Summary = {
   total: number;
