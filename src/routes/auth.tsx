@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/app-button";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
+import { setGuestMode } from "@/lib/guest/mode";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
