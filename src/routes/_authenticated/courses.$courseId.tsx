@@ -59,6 +59,8 @@ function CourseOverviewPage() {
   const fetchCourses = useServerFn(listCourses);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
   const [editing, setEditing] = useState(false);
+  // Add an assignment, quiz, exam or project straight onto this class.
+  const [adding, setAdding] = useState(false);
 
   const {
     data: planner,
