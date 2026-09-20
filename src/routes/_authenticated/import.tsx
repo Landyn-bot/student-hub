@@ -698,6 +698,8 @@ function ImportSemesterPage() {
 
         {summary.complete > 0 && !working ? <FinishedSummary summary={summary} /> : null}
 
+        <NameCourseDialog request={nameQueue[0] ?? null} onConfirm={confirmCourseName} />
+
         {summary.complete > 0 ? <AttentionPanel /> : null}
       </div>
     </>
