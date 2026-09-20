@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
+import { ManualItemForm } from "@/components/app/ManualItemForm";
 import { PageHeader } from "@/components/app/PageHeader";
 import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { ErrorNote, LoadingRows } from "@/components/app/StatusNote";
@@ -56,6 +57,7 @@ function AssignmentsPage() {
   const fetchPlanner = useServerFn(getPlannerData);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
   const [filter, setFilter] = useState<AssignmentFilter>("active");
+  const [adding, setAdding] = useState(false);
 
   const { data, isPending, isError, refetch, isRefetching } = useQuery({
     queryKey: ["planner"],
@@ -97,11 +99,23 @@ function AssignmentsPage() {
         eyebrow="Assignments"
         title="What's due, in order."
         action={
-          <Button variant="accent" asChild>
-            <Link to="/import">+ Upload courses</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="soft" onClick={() => setAdding((open) => !open)}>
+              {adding ? "Close" : "+ Add manually"}
+            </Button>
+            <Button variant="accent" asChild>
+              <Link to="/import">+ Upload courses</Link>
+            </Button>
+          </div>
         }
       />
+
+      {adding ? (
+        <Panel className="mb-6">
+          <PanelHeader title="Add it yourself" aside="No file needed" />
+          <ManualItemForm courses={data?.courses ?? []} onDone={() => setAdding(false)} />
+        </Panel>
+      ) : null}
 
       <Panel>
         <PanelHeader
