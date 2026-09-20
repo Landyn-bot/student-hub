@@ -331,6 +331,8 @@ function ImportSemesterPage() {
       />
 
       <div className="grid gap-5">
+        <CanvasTutorial />
+
         <Panel>
           <PanelHeader title="Course files" aside="One file per course" />
           <ol className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/50">
