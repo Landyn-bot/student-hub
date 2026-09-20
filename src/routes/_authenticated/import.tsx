@@ -389,6 +389,26 @@ function ImportSemesterPage() {
   const [imports, setImports] = useState<CourseImport[]>([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Course-name prompts queue up so concurrent imports ask one at a time.
+  const [nameQueue, setNameQueue] = useState<NameRequest[]>([]);
+
+  /** Pause a file's pipeline until the student confirms its course name. */
+  const askCourseName = useCallback(
+    (importId: string, guess: string) =>
+      new Promise<string>((resolve) => {
+        setNameQueue((queue) => [...queue, { importId, guess, resolve }]);
+      }),
+    [],
+  );
+
+  const confirmCourseName = useCallback(
+    (request: NameRequest, name: string) => {
+      patch(request.importId, { confirmedName: name });
+      request.resolve(name);
+      setNameQueue((queue) => queue.filter((item) => item.importId !== request.importId));
+    },
+    [patch],
+  );
 
   const patch = useCallback((importId: string, next: Partial<CourseImport>) => {
     setImports((prev) =>
