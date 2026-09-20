@@ -257,11 +257,13 @@ function DashboardPage() {
       </Panel>
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-2">
-        <Panel className="min-w-0">
+        <Panel className="min-w-0" delay={120}>
           <PanelHeader
             title="Today"
+            icon={<Sun className="size-4 text-course-mustard" />}
             aside={groups.dueToday.length > 0 ? `${groups.dueToday.length} due` : undefined}
           />
+
           {groups.classesToday.length > 0 ? (
             <div className="mb-4">
               <p className="mb-2 text-xs uppercase tracking-wide text-foreground/45">
