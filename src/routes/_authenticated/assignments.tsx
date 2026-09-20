@@ -195,9 +195,7 @@ function AssignmentsPage() {
                           Overdue
                         </span>
                       ) : null}
-                      <span className="block">
-                        {item.date ? formatDay(item.date) : "No date"}
-                      </span>
+                      <span className="block">{item.date ? formatDay(item.date) : "No date"}</span>
                       {item.time ? <span className="block">{item.time}</span> : null}
                     </span>
                   </button>
