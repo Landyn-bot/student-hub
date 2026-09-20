@@ -331,7 +331,7 @@ export const addManualItem = createServerFn({ method: "POST" })
         ai_generated: false,
         review_status: "approved",
       });
-    if (insert.error) throw new Error("We could not save that item.");
+      if (insert.error) throw new Error("We could not save that item.");
     }
 
     return { ok: true };
