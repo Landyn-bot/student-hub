@@ -1,12 +1,18 @@
 // Lets a student add one assignment, quiz, exam or project by hand, so nothing
-// has to be imported from a file. Writes through the same planner data everything
-// else on the site reads.
+// has to be imported from a file — and edit that item later. Writes through the
+// same planner data everything else on the site reads.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/app-button";
-import { addManualItem, type ManualItemKind, type PlannerCourse } from "@/lib/planner.functions";
+import {
+  addManualItem,
+  updateManualItem,
+  type ManualItemKind,
+  type PlannerCourse,
+  type PlannerItem,
+} from "@/lib/planner.functions";
 
 const KINDS: { key: ManualItemKind; label: string }[] = [
   { key: "assignment", label: "Assignment" },
@@ -28,32 +34,45 @@ function todayKey(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
+/** Maps a stored planner item back to the kind picker value. */
+function kindOf(item: PlannerItem): ManualItemKind {
+  if (item.type === "quiz" || item.type === "exam" || item.type === "project") return item.type;
+  return "assignment";
+}
+
 export function ManualItemForm({
   courses,
+  editing,
   onDone,
 }: {
   courses: PlannerCourse[];
+  /** When set, the form edits that item instead of adding a new one. */
+  editing?: PlannerItem;
   onDone?: () => void;
 }) {
   const queryClient = useQueryClient();
   const runAdd = useServerFn(addManualItem);
+  const runUpdate = useServerFn(updateManualItem);
 
-  const [kind, setKind] = useState<ManualItemKind>("assignment");
-  const [title, setTitle] = useState("");
-  const [courseChoice, setCourseChoice] = useState<string>(courses[0]?.id ?? NEW_COURSE);
+  const [kind, setKind] = useState<ManualItemKind>(editing ? kindOf(editing) : "assignment");
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [courseChoice, setCourseChoice] = useState<string>(
+    editing?.courseId ?? courses[0]?.id ?? NEW_COURSE,
+  );
   const [newCourse, setNewCourse] = useState("");
-  const [date, setDate] = useState(todayKey());
-  const [time, setTime] = useState("");
-  const [notes, setNotes] = useState("");
+  const [date, setDate] = useState(editing?.date ?? todayKey());
+  const [time, setTime] = useState(editing?.time ?? "");
+  const [notes, setNotes] = useState(editing?.description ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  const addMutation = useMutation({
-    mutationFn: runAdd,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["planner"] });
-      void queryClient.invalidateQueries({ queryKey: ["focus"] });
-    },
-  });
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["planner"] });
+    void queryClient.invalidateQueries({ queryKey: ["focus"] });
+  };
+
+  const addMutation = useMutation({ mutationFn: runAdd, onSuccess: refresh });
+  const updateMutation = useMutation({ mutationFn: runUpdate, onSuccess: refresh });
+  const saving = addMutation.isPending || updateMutation.isPending;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -66,29 +85,37 @@ export function ManualItemForm({
       setError("Name the class it's for.");
       return;
     }
-    addMutation.mutate(
-      {
-        data: {
-          kind,
-          title,
-          courseId: courseChoice === NEW_COURSE ? null : courseChoice,
-          courseName: courseChoice === NEW_COURSE ? newCourse : null,
-          date,
-          time: time || null,
-          notes: notes || null,
+    const payload = {
+      kind,
+      title,
+      courseId: courseChoice === NEW_COURSE ? null : courseChoice,
+      courseName: courseChoice === NEW_COURSE ? newCourse : null,
+      date,
+      time: time || null,
+      notes: notes || null,
+    };
+    const onError = (err: unknown) =>
+      setError(err instanceof Error ? err.message : "We could not save that item.");
+
+    if (editing) {
+      updateMutation.mutate(
+        { data: { id: editing.id, ...payload } },
+        { onSuccess: () => onDone?.(), onError },
+      );
+    } else {
+      addMutation.mutate(
+        { data: payload },
+        {
+          onSuccess: () => {
+            setTitle("");
+            setTime("");
+            setNotes("");
+            onDone?.();
+          },
+          onError,
         },
-      },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setTime("");
-          setNotes("");
-          onDone?.();
-        },
-        onError: (err) =>
-          setError(err instanceof Error ? err.message : "We could not save that item."),
-      },
-    );
+      );
+    }
   };
 
   return (
@@ -100,6 +127,7 @@ export function ManualItemForm({
             type="button"
             size="sm"
             variant={kind === entry.key ? "brand" : "soft"}
+            disabled={Boolean(editing) && entry.key !== kind}
             onClick={() => setKind(entry.key)}
           >
             {entry.label}
@@ -179,8 +207,8 @@ export function ManualItemForm({
 
       {error ? <p className="text-sm text-accent">{error}</p> : null}
 
-      <Button type="submit" variant="accent" loading={addMutation.isPending}>
-        Add to my planner
+      <Button type="submit" variant="accent" loading={saving}>
+        {editing ? "Save changes" : "Add to my planner"}
       </Button>
     </form>
   );
