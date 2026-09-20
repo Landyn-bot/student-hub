@@ -368,8 +368,12 @@ function DashboardPage() {
         )}
       </Panel>
 
-      <Panel className="mt-5">
-        <PanelHeader title="Courses" aside={courses.length > 0 ? `${courses.length}` : undefined} />
+      <Panel className="mt-5" delay={240}>
+        <PanelHeader
+          title="Courses"
+          icon={<GraduationCap className="size-4 text-course-berry" />}
+          aside={courses.length > 0 ? `${courses.length}` : undefined}
+        />
         {isPending ? (
           <LoadingTiles />
         ) : courses.length === 0 ? (
@@ -379,20 +383,23 @@ function DashboardPage() {
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.map((course) => {
+            {courses.map((course, index) => {
               const palette = coursePalette(course.id);
               return (
                 <div
                   key={course.id}
                   className={cn(
-                    "inset-tile overflow-hidden border-l-4 bg-background p-4",
+                    "inset-tile tile-lift rise-in overflow-hidden border-l-4 bg-gradient-to-br to-transparent p-4",
                     palette.border,
+                    palette.soft,
                   )}
+                  style={{ animationDelay: `${index * 55}ms` }}
                 >
                   <span
                     className={cn("mb-3 block size-3 rounded-full", palette.solid)}
                     aria-hidden
                   />
+
                   <p className="font-display text-base font-semibold text-foreground">
                     {course.name}
                   </p>
