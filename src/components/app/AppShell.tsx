@@ -26,8 +26,28 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
   }
 
   return (
-    <div className="min-h-screen bg-background font-body text-foreground">
-      <header className="sticky top-0 z-20 bg-background/85 ring-1 ring-black/5 backdrop-blur">
+    <div className="relative min-h-screen bg-background font-body text-foreground">
+      {/* Decorative drifting colour behind every page. */}
+      <div className="aurora-field" aria-hidden>
+        <span
+          className="aurora-blob -left-32 top-[-10rem] size-[30rem] bg-course-leaf/35"
+          style={{ animationDelay: "0s" }}
+        />
+        <span
+          className="aurora-blob right-[-12rem] top-24 size-[26rem] bg-course-blue/30"
+          style={{ animationDelay: "-7s" }}
+        />
+        <span
+          className="aurora-blob bottom-[-14rem] left-1/3 size-[32rem] bg-course-coral/25"
+          style={{ animationDelay: "-14s" }}
+        />
+        <span
+          className="aurora-blob bottom-24 right-1/4 size-[22rem] bg-course-mustard/25"
+          style={{ animationDelay: "-20s" }}
+        />
+      </div>
+
+      <header className="sticky top-0 z-20 bg-background/70 ring-1 ring-black/5 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-5 sm:px-8">
           <Button
             variant="soft"
@@ -39,8 +59,8 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
             <Menu className="size-4" />
           </Button>
 
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
+          <Link to="/dashboard" className="group flex items-center gap-2">
+            <span className="grid size-7 place-items-center rounded-[10px] bg-gradient-to-br from-primary to-course-teal font-display text-xs font-semibold text-primary-foreground shadow-[0_10px_20px_-14px_oklch(0.313_0.0175_158/90%)] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
               S
             </span>
             <span className="font-display text-lg font-semibold tracking-tight">Syllo</span>
@@ -53,7 +73,7 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
               onClick={handleSignOut}
               className="h-9 gap-2 py-1 pl-1 pr-3"
             >
-              <span className="grid size-7 place-items-center rounded-[10px] bg-accent/90 text-xs font-semibold text-accent-foreground">
+              <span className="grid size-7 place-items-center rounded-[10px] bg-gradient-to-br from-accent to-course-coral text-xs font-semibold text-accent-foreground">
                 {initials(displayName)}
               </span>
               <span className="hidden text-sm font-medium sm:inline">{displayName}</span>
@@ -63,12 +83,14 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-7xl gap-6 px-5 sm:px-8">
+      <div className="relative z-10 mx-auto flex max-w-7xl gap-6 px-5 sm:px-8">
         <aside className="hidden w-56 shrink-0 py-6 lg:block">
-          <SidebarNav />
-          <p className="mt-8 border-t border-border pt-4 text-xs leading-relaxed text-foreground/45">
-            Built for SteelHacks XIII · 2026
-          </p>
+          <div className="sticky top-24">
+            <SidebarNav />
+            <p className="mt-8 border-t border-border pt-4 text-xs leading-relaxed text-foreground/45">
+              Built for SteelHacks XIII · 2026
+            </p>
+          </div>
         </aside>
 
         <main className="min-w-0 flex-1 py-6">{children}</main>

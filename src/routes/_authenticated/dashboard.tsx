@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { CalendarClock, CalendarDays, GraduationCap, Sparkles, Sun } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
@@ -151,11 +152,36 @@ function DashboardPage() {
         }
       />
 
+      {/* Live counts, drawn only from the student's own stored data. */}
+      <div className="rise-in mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Due today", value: groups.dueToday.length, tint: "from-course-coral/20" },
+          { label: "This week", value: groups.week.length, tint: "from-course-blue/20" },
+          { label: "Upcoming", value: groups.upcoming.length, tint: "from-course-teal/20" },
+          { label: "Courses", value: courses.length, tint: "from-course-mustard/25" },
+        ].map((stat, index) => (
+          <div
+            key={stat.label}
+            className={cn(
+              "inset-tile tile-lift rise-in bg-gradient-to-br to-transparent p-4",
+              stat.tint,
+            )}
+            style={{ animationDelay: `${index * 60}ms` }}
+          >
+            <p className="font-display text-2xl font-semibold text-foreground">{stat.value}</p>
+            <p className="mt-0.5 text-xs uppercase tracking-[0.12em] text-foreground/50">
+              {stat.label}
+            </p>
+          </div>
+        ))}
+      </div>
+
       {attention > 0 && (
-        <Panel className="mb-5 border-accent/40">
+        <Panel className="mb-5 border border-accent/40" delay={40}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-lg font-semibold text-foreground">
+              <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+                <span className="soft-pulse size-2 rounded-full bg-accent" aria-hidden />
                 {attention} item{attention === 1 ? "" : "s"} need your attention
               </h2>
               <p className="text-sm text-foreground/60">
@@ -169,8 +195,13 @@ function DashboardPage() {
         </Panel>
       )}
 
-      <Panel className="mb-5">
-        <PanelHeader title="What should I work on?" aside="Ranked from your own deadlines" />
+      <Panel className="mb-5" delay={80}>
+        <PanelHeader
+          title="What should I work on?"
+          aside="Ranked from your own deadlines"
+          icon={<Sparkles className="size-4 text-course-berry" />}
+        />
+
         {focusPending ? (
           <LoadingRows rows={2} />
         ) : (focus?.items.length ?? 0) === 0 ? (
@@ -184,16 +215,16 @@ function DashboardPage() {
           />
         ) : (
           <ul className="space-y-2">
-            {focus?.items.map((item) => {
+            {focus?.items.map((item, index) => {
               const match = planner?.items.find((entry) => entry.id === item.id) ?? null;
               const palette = coursePalette(match?.courseId);
               return (
-                <li key={item.id}>
+                <li key={item.id} className="rise-in" style={{ animationDelay: `${index * 55}ms` }}>
                   <button
                     type="button"
                     onClick={() => match && setSelected(match)}
                     className={cn(
-                      "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+                      "inset-tile tile-lift flex w-full items-stretch gap-3 overflow-hidden bg-background text-left",
                       palette.hover,
                     )}
                   >
@@ -201,6 +232,7 @@ function DashboardPage() {
                       className={cn("w-1.5 shrink-0 self-stretch", palette.solid)}
                       aria-hidden
                     />
+
                     <span className="min-w-0 flex-1 py-3">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
@@ -226,11 +258,13 @@ function DashboardPage() {
       </Panel>
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-2">
-        <Panel className="min-w-0">
+        <Panel className="min-w-0" delay={120}>
           <PanelHeader
             title="Today"
+            icon={<Sun className="size-4 text-course-mustard" />}
             aside={groups.dueToday.length > 0 ? `${groups.dueToday.length} due` : undefined}
           />
+
           {groups.classesToday.length > 0 ? (
             <div className="mb-4">
               <p className="mb-2 text-xs uppercase tracking-wide text-foreground/45">
@@ -275,11 +309,13 @@ function DashboardPage() {
           )}
         </Panel>
 
-        <Panel className="min-w-0">
+        <Panel className="min-w-0" delay={160}>
           <PanelHeader
             title="Upcoming"
+            icon={<CalendarClock className="size-4 text-course-blue" />}
             aside={groups.upcoming.length > 0 ? `${groups.upcoming.length} items` : undefined}
           />
+
           {isPending ? (
             <LoadingRows rows={3} />
           ) : isError ? (
@@ -303,8 +339,12 @@ function DashboardPage() {
         </Panel>
       </div>
 
-      <Panel className="mt-5">
-        <PanelHeader title="This week" />
+      <Panel className="mt-5" delay={200}>
+        <PanelHeader
+          title="This week"
+          icon={<CalendarDays className="size-4 text-course-teal" />}
+        />
+
         {isPending ? (
           <LoadingRows rows={2} />
         ) : groups.week.length === 0 ? (
@@ -314,11 +354,13 @@ function DashboardPage() {
           />
         ) : (
           <div className="space-y-4">
-            {groups.week.map(([day, items]) => (
-              <div key={day}>
-                <h3 className="mb-2 text-[11px] uppercase tracking-[0.12em] text-foreground/50">
+            {groups.week.map(([day, items], index) => (
+              <div key={day} className="rise-in" style={{ animationDelay: `${index * 60}ms` }}>
+                <h3 className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-foreground/50">
+                  <span className="h-px w-4 bg-gradient-to-r from-course-teal to-transparent" />
                   {formatDay(day)}
                 </h3>
+
                 <ul className="space-y-2">
                   {items.map((item) => (
                     <ItemRow key={item.id} item={item} onOpen={setSelected} />
@@ -330,8 +372,12 @@ function DashboardPage() {
         )}
       </Panel>
 
-      <Panel className="mt-5">
-        <PanelHeader title="Courses" aside={courses.length > 0 ? `${courses.length}` : undefined} />
+      <Panel className="mt-5" delay={240}>
+        <PanelHeader
+          title="Courses"
+          icon={<GraduationCap className="size-4 text-course-berry" />}
+          aside={courses.length > 0 ? `${courses.length}` : undefined}
+        />
         {isPending ? (
           <LoadingTiles />
         ) : courses.length === 0 ? (
@@ -341,20 +387,23 @@ function DashboardPage() {
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.map((course) => {
+            {courses.map((course, index) => {
               const palette = coursePalette(course.id);
               return (
                 <div
                   key={course.id}
                   className={cn(
-                    "inset-tile overflow-hidden border-l-4 bg-background p-4",
+                    "inset-tile tile-lift rise-in overflow-hidden border-l-4 p-4",
                     palette.border,
+                    palette.soft,
                   )}
+                  style={{ animationDelay: `${index * 55}ms` }}
                 >
                   <span
                     className={cn("mb-3 block size-3 rounded-full", palette.solid)}
                     aria-hidden
                   />
+
                   <p className="font-display text-base font-semibold text-foreground">
                     {course.name}
                   </p>
@@ -396,11 +445,18 @@ function ItemRow({
         type="button"
         onClick={() => onOpen(item)}
         className={cn(
-          "inset-tile ml-2 flex w-full min-w-0 items-stretch gap-3 overflow-hidden bg-background text-left transition",
+          "inset-tile tile-lift group ml-2 flex w-full min-w-0 items-stretch gap-3 overflow-hidden bg-background text-left",
           palette.hover,
         )}
       >
-        <span className={cn("w-1.5 shrink-0 self-stretch", palette.solid)} aria-hidden />
+        <span
+          className={cn(
+            "w-1.5 shrink-0 self-stretch transition-all duration-200 group-hover:w-2.5",
+            palette.solid,
+          )}
+          aria-hidden
+        />
+
         {/* flex-1 keeps the text column bounded so the truncation below can take effect. */}
         <span className="min-w-0 flex-1 py-3">
           <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>

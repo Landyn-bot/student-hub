@@ -14,7 +14,16 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("inset-tile bg-background p-6 text-center sm:p-8", className)}>
+    <div
+      className={cn(
+        "inset-tile relative overflow-hidden bg-gradient-to-br from-background to-course-teal-soft/50 p-6 text-center sm:p-8",
+        className,
+      )}
+    >
+      <span
+        className="soft-pulse mx-auto mb-3 block size-2 rounded-full bg-course-teal"
+        aria-hidden
+      />
       <p className="font-display text-base font-medium text-foreground">{title}</p>
       <p className="mx-auto mt-1 max-w-[40ch] text-pretty text-sm text-foreground/55">
         {description}
