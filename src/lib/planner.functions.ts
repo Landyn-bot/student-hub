@@ -236,3 +236,101 @@ export const setAssignmentDone = createServerFn({ method: "POST" })
     if (update.error) throw new Error("We could not update that item.");
     return { ok: true };
   });
+
+/** What a student can add by hand, without importing a file. */
+export type ManualItemKind = "assignment" | "quiz" | "exam" | "project";
+
+export type ManualItemInput = {
+  kind: ManualItemKind;
+  title: string;
+  /** Existing course to attach to. */
+  courseId?: string | null;
+  /** New class name, used when no existing course was picked. */
+  courseName?: string | null;
+  /** ISO date (YYYY-MM-DD). */
+  date: string;
+  /** Optional HH:MM. */
+  time?: string | null;
+  notes?: string | null;
+};
+
+/**
+ * Adds a single assignment, quiz, exam or project entered by hand.
+ * Quizzes and exams are stored as sittings; assignments and projects as coursework.
+ * Everything is owned by the signed-in user and never marked AI generated.
+ */
+export const addManualItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: ManualItemInput) => input)
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase, userId } = context;
+
+    const title = data.title.trim();
+    if (!title) throw new Error("Give it a title.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) throw new Error("Pick a date.");
+    const time = data.time?.trim() ? data.time.trim() : null;
+    const notes = data.notes?.trim() ? data.notes.trim() : null;
+
+    // Resolve the class: an existing one the student picked, or a new one they typed.
+    let courseId: string | null = null;
+    if (data.courseId) {
+      const owned = await supabase
+        .from("courses")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("id", data.courseId)
+        .maybeSingle();
+      if (!owned.data) throw new Error("That class could not be found.");
+      courseId = owned.data.id;
+    } else if (data.courseName?.trim()) {
+      const name = data.courseName.trim();
+      const existing = await supabase
+        .from("courses")
+        .select("id")
+        .eq("user_id", userId)
+        .ilike("name", name)
+        .maybeSingle();
+      if (existing.data) {
+        courseId = existing.data.id;
+      } else {
+        const created = await supabase
+          .from("courses")
+          .insert({ user_id: userId, name, source: "manual" })
+          .select("id")
+          .single();
+        if (created.error || !created.data) throw new Error("We could not save that class.");
+        courseId = created.data.id;
+      }
+    }
+
+    if (data.kind === "quiz" || data.kind === "exam") {
+      const insert = await supabase.from("exams").insert({
+        user_id: userId,
+        course_id: courseId,
+        title,
+        description: notes,
+        exam_date: data.date,
+        start_time: time,
+        exam_type: data.kind,
+        ai_generated: false,
+        review_status: "approved",
+      });
+      if (insert.error) throw new Error("We could not save that item.");
+    } else {
+      const insert = await supabase.from("assignments").insert({
+        user_id: userId,
+        course_id: courseId,
+        title,
+        description: notes,
+        due_date: data.date,
+        due_time: time,
+        status: "todo",
+        priority: "medium",
+        ai_generated: false,
+        review_status: "approved",
+      });
+      if (insert.error) throw new Error("We could not save that item.");
+    }
+
+    return { ok: true };
+  });
