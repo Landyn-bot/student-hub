@@ -39,8 +39,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.import_batches TO authenticated;
 GRANT ALL ON public.import_batches TO service_role;
 REVOKE ALL ON public.import_batches FROM anon;
 ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own import batches" ON public.import_batches;
 CREATE POLICY "Users manage own import batches" ON public.import_batches
   FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS set_import_batches_updated_at ON public.import_batches;
 CREATE TRIGGER set_import_batches_updated_at BEFORE UPDATE ON public.import_batches
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE INDEX IF NOT EXISTS import_batches_user_status_idx ON public.import_batches (user_id, status);
@@ -81,8 +83,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.import_staged_items TO authentica
 GRANT ALL ON public.import_staged_items TO service_role;
 REVOKE ALL ON public.import_staged_items FROM anon;
 ALTER TABLE public.import_staged_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own staged items" ON public.import_staged_items;
 CREATE POLICY "Users manage own staged items" ON public.import_staged_items
   FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS set_import_staged_items_updated_at ON public.import_staged_items;
 CREATE TRIGGER set_import_staged_items_updated_at BEFORE UPDATE ON public.import_staged_items
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE INDEX IF NOT EXISTS import_staged_items_batch_idx ON public.import_staged_items (batch_id);
@@ -115,8 +119,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.class_meetings TO authenticated;
 GRANT ALL ON public.class_meetings TO service_role;
 REVOKE ALL ON public.class_meetings FROM anon;
 ALTER TABLE public.class_meetings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own class meetings" ON public.class_meetings;
 CREATE POLICY "Users manage own class meetings" ON public.class_meetings
   FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS set_class_meetings_updated_at ON public.class_meetings;
 CREATE TRIGGER set_class_meetings_updated_at BEFORE UPDATE ON public.class_meetings
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE INDEX IF NOT EXISTS class_meetings_user_idx ON public.class_meetings (user_id, weekday);
