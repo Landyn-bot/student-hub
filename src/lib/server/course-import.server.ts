@@ -89,7 +89,11 @@ export async function persistCourseImport(
   userId: string,
   data: SaveCourseImportData,
 ): Promise<SaveCourseImportResult> {
-  const extraction = data.extraction;
+  // Second interpretation pass: tidy titles, drop boilerplate, de-duplicate and re-file
+  // mis-categorised items before any of it reaches the student's semester.
+  const { refineExtraction } = await import("@/lib/server/item-refine.server");
+  const refined = await refineExtraction(data.extraction);
+  const extraction = refined.extraction;
   const year = referenceYearFrom(extraction.course.semester);
 
   try {
