@@ -8,6 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isSitting } from "@/lib/planner.functions";
 
 export type FocusItem = {
   id: string;
@@ -165,8 +166,10 @@ export const getFocusPlan = createServerFn({ method: "GET" })
       },
     ) => {
       const daysUntil = daysBetween(today, row.date);
-      // Keep recent misses and the next two weeks; anything further is not "right now".
-      if (daysUntil > HORIZON_DAYS || daysUntil < -14) return;
+      // Quizzes, tests and exams are sat on a fixed day: once that day passes they are
+      // simply over, never "late". Only handed-in work can fall behind.
+      const sitting = kind === "exam" || isSitting(row.title);
+      if (daysUntil > HORIZON_DAYS || daysUntil < (sitting ? 0 : -14)) return;
       candidates.push({
         id: row.id,
         kind,
@@ -175,7 +178,7 @@ export const getFocusPlan = createServerFn({ method: "GET" })
         date: row.date,
         time: shortTime(row.time),
         daysUntil,
-        overdue: daysUntil < 0,
+        overdue: !sitting && daysUntil < 0,
         points: row.points,
         weight: row.weight,
       });
