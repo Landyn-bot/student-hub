@@ -16,11 +16,7 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { coursePalette } from "@/lib/course-colors";
 import { listCourses } from "@/lib/courses.functions";
 import { isOverdue, sortByPriority, todayKey } from "@/lib/item-priority";
-import {
-  getPlannerData,
-  type PlannerCourse,
-  type PlannerItem,
-} from "@/lib/planner.functions";
+import { getPlannerData, type PlannerCourse, type PlannerItem } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/courses/$courseId")({
@@ -177,7 +173,6 @@ function CourseOverviewPage() {
           <CourseForm editing={course} onDone={() => setEditing(false)} />
         </Panel>
       ) : null}
-
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         {[
