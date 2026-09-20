@@ -82,6 +82,11 @@ export function AppShell({
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
+            {guest ? (
+              <Button variant="accent" size="sm" className="h-9" asChild>
+                <Link to="/auth">Save to an account</Link>
+              </Button>
+            ) : null}
             <Button
               variant="soft"
               size="sm"
@@ -92,7 +97,7 @@ export function AppShell({
                 {initials(displayName)}
               </span>
               <span className="hidden text-sm font-medium sm:inline">{displayName}</span>
-              <span className="text-xs text-foreground/40">Sign out</span>
+              <span className="text-xs text-foreground/40">{guest ? "Leave" : "Sign out"}</span>
             </Button>
           </div>
         </div>
