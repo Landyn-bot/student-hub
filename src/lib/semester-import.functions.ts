@@ -19,8 +19,15 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseItemDate } from "@/lib/import-dates";
-// Type only: the reconciliation engine itself is loaded inside the handler.
-import type { ExistingItem } from "@/lib/server/conflicts.server";
+// Mirrors ExistingItem in the server-only reconciliation engine, which is loaded
+// inside the handler so no server module is referenced from this client-reachable file.
+type ExistingItem = {
+  id: string;
+  title: string;
+  date: string | null;
+  sourceText: string | null;
+  documentId: string | null;
+};
 
 /* ------------------------------------------------------------------ */
 /* Contract                                                            */
