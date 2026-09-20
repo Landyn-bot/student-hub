@@ -19,6 +19,14 @@ import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
 import type { ChunkTrace, CourseExtraction } from "@/lib/course-content";
