@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { CalendarClock, CalendarDays, GraduationCap, Sparkles, Sun } from "lucide-react";
 import { useMemo, useState } from "react";
+
 
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
 import { PageHeader } from "@/components/app/PageHeader";
