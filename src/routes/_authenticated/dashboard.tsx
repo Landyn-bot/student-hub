@@ -389,9 +389,10 @@ function DashboardPage() {
                 <div
                   key={course.id}
                   className={cn(
-                    "inset-tile tile-lift rise-in overflow-hidden border-l-4 bg-gradient-to-br to-transparent p-4",
+                    "inset-tile tile-lift rise-in overflow-hidden border-l-4 p-4",
                     palette.border,
                     palette.soft,
+
                   )}
                   style={{ animationDelay: `${index * 55}ms` }}
                 >
