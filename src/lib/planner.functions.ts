@@ -1,6 +1,8 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
 /** A single academic obligation, normalized across assignments, exams and events. */
 export type PlannerItem = {
@@ -352,7 +354,7 @@ export type UpdateManualItemInput = {
  * or a new one they typed (reusing a same-named class when there is one).
  */
 async function resolveCourse(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   userId: string,
   courseId: string | null | undefined,
   courseName: string | null | undefined,
