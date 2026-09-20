@@ -55,7 +55,13 @@ function CourseOverviewPage() {
   const [selected, setSelected] = useState<PlannerItem | null>(null);
   const [editing, setEditing] = useState(false);
 
-  const { data: planner, isPending, isError, refetch, isRefetching } = useQuery({
+  const {
+    data: planner,
+    isPending,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["planner"],
     queryFn: () => fetchPlanner(),
   });
@@ -89,7 +95,9 @@ function CourseOverviewPage() {
 
     const meetings = (planner?.classMeetings ?? [])
       .filter((meeting) => meeting.courseId === courseId)
-      .sort((a, b) => a.weekday - b.weekday || (a.startTime ?? "").localeCompare(b.startTime ?? ""));
+      .sort(
+        (a, b) => a.weekday - b.weekday || (a.startTime ?? "").localeCompare(b.startTime ?? ""),
+      );
 
     return { done, overdue, past, ahead, grouped, meetings };
   }, [planner, courseId]);
@@ -138,7 +146,10 @@ function CourseOverviewPage() {
         ].map((stat, index) => (
           <div
             key={stat.label}
-            className={cn("inset-tile tile-lift rise-in bg-gradient-to-br to-transparent p-4", stat.tint)}
+            className={cn(
+              "inset-tile tile-lift rise-in bg-gradient-to-br to-transparent p-4",
+              stat.tint,
+            )}
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <p className="font-display text-2xl font-semibold text-foreground">{stat.value}</p>

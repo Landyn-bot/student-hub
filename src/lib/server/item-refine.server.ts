@@ -73,10 +73,8 @@ function statedDate(item: Item): string | null {
 
 /** Prefers the entry that actually carries a date and the longer description. */
 function richer(a: Item, b: Item): Item {
-  const aScore =
-    (statedDate(a) ? 4 : 0) + (a.description?.length ?? 0) / 500 + (a.confidence ?? 0);
-  const bScore =
-    (statedDate(b) ? 4 : 0) + (b.description?.length ?? 0) / 500 + (b.confidence ?? 0);
+  const aScore = (statedDate(a) ? 4 : 0) + (a.description?.length ?? 0) / 500 + (a.confidence ?? 0);
+  const bScore = (statedDate(b) ? 4 : 0) + (b.description?.length ?? 0) / 500 + (b.confidence ?? 0);
   return bScore > aScore ? b : a;
 }
 
@@ -84,7 +82,11 @@ function richer(a: Item, b: Item): Item {
 /* Stage 1 — deterministic tidy                                        */
 /* ------------------------------------------------------------------ */
 
-function tidy(extraction: Extraction): { extraction: Extraction; removed: number; refiled: number } {
+function tidy(extraction: Extraction): {
+  extraction: Extraction;
+  removed: number;
+  refiled: number;
+} {
   const buckets = new Map<DatedKey, Item[]>(datedKeys.map((key) => [key, []]));
   let removed = 0;
   let refiled = 0;

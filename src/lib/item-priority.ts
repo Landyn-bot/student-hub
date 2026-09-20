@@ -53,7 +53,9 @@ export function priorityScore(
   if (item.done) return -100;
 
   const days = daysBetween(today, item.date);
-  let score = isOverdue(item, today) ? 120 + Math.min(30, Math.abs(days)) : Math.max(0, 100 - days * 8);
+  let score = isOverdue(item, today)
+    ? 120 + Math.min(30, Math.abs(days))
+    : Math.max(0, 100 - days * 8);
   score += kindWeight(item);
   // A day carrying several deadlines deserves an earlier look than a quiet one.
   score += Math.min(10, Math.max(0, (options.sameDayCount ?? 1) - 1) * 3);
