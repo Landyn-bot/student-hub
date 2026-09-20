@@ -186,8 +186,11 @@ async function requestOnce(request: NemotronRequest): Promise<NemotronResult> {
     throw new NemotronError("malformed_response", messageFor("malformed_response"));
   }
 
-  const content = payload.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || content.trim().length === 0) {
+  // reasoning_content, when present, carries the chain-of-thought separately;
+  // it is never read. Inline <think> blocks are stripped from the visible text.
+  const raw = payload.choices?.[0]?.message?.content;
+  const content = typeof raw === "string" ? stripModelThinking(raw) : "";
+  if (content.length === 0) {
     console.error(`[nemotron] response missing text after ${latencyMs}ms`, {
       model,
       keys: Object.keys(payload ?? {}),
