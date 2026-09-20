@@ -32,9 +32,9 @@ export type Database = {
           priority: string
           review_status: string
           source_chunk_key: string | null
-          source_section: string | null
           source_document_id: string | null
           source_page: number | null
+          source_section: string | null
           source_text: string | null
           status: string
           title: string
@@ -59,9 +59,9 @@ export type Database = {
           priority?: string
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
           source_document_id?: string | null
           source_page?: number | null
+          source_section?: string | null
           source_text?: string | null
           status?: string
           title: string
@@ -86,9 +86,9 @@ export type Database = {
           priority?: string
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
           source_document_id?: string | null
           source_page?: number | null
+          source_section?: string | null
           source_text?: string | null
           status?: string
           title?: string
@@ -175,8 +175,8 @@ export type Database = {
           recurrence_rule: string | null
           review_status: string
           source_chunk_key: string | null
-          source_section: string | null
           source_document_id: string | null
+          source_section: string | null
           source_text: string | null
           starts_at: string | null
           title: string
@@ -202,8 +202,8 @@ export type Database = {
           recurrence_rule?: string | null
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
           source_document_id?: string | null
+          source_section?: string | null
           source_text?: string | null
           starts_at?: string | null
           title: string
@@ -229,8 +229,8 @@ export type Database = {
           recurrence_rule?: string | null
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
           source_document_id?: string | null
+          source_section?: string | null
           source_text?: string | null
           starts_at?: string | null
           title?: string
@@ -511,13 +511,13 @@ export type Database = {
           edited_by_user: boolean
           id: string
           needs_attention_reason: string | null
+          parameters: Json | null
           policy_type: string
           review_status: string
           source_chunk_key: string | null
-          source_section: string | null
-          parameters: Json | null
           source_document_id: string | null
           source_page: number | null
+          source_section: string | null
           source_text: string | null
           title: string
           updated_at: string
@@ -533,13 +533,13 @@ export type Database = {
           edited_by_user?: boolean
           id?: string
           needs_attention_reason?: string | null
+          parameters?: Json | null
           policy_type?: string
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
-          parameters?: Json | null
           source_document_id?: string | null
           source_page?: number | null
+          source_section?: string | null
           source_text?: string | null
           title: string
           updated_at?: string
@@ -555,13 +555,13 @@ export type Database = {
           edited_by_user?: boolean
           id?: string
           needs_attention_reason?: string | null
+          parameters?: Json | null
           policy_type?: string
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
-          parameters?: Json | null
           source_document_id?: string | null
           source_page?: number | null
+          source_section?: string | null
           source_text?: string | null
           title?: string
           updated_at?: string
@@ -655,8 +655,8 @@ export type Database = {
           points: number | null
           review_status: string
           source_chunk_key: string | null
-          source_section: string | null
           source_document_id: string | null
+          source_section: string | null
           source_text: string | null
           start_time: string | null
           title: string
@@ -681,8 +681,8 @@ export type Database = {
           points?: number | null
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
           source_document_id?: string | null
+          source_section?: string | null
           source_text?: string | null
           start_time?: string | null
           title: string
@@ -707,8 +707,8 @@ export type Database = {
           points?: number | null
           review_status?: string
           source_chunk_key?: string | null
-          source_section?: string | null
           source_document_id?: string | null
+          source_section?: string | null
           source_text?: string | null
           start_time?: string | null
           title?: string
