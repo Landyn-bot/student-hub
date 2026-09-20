@@ -109,7 +109,7 @@ export async function parseEpub(
     );
   }
 
-  const chunks = buildChunks(documents, { maxChars: options.maxChunkChars ?? 12_000 });
+  const chunks = buildChunks(documents, { maxChars: options.maxChunkChars ?? 8_000 });
   if (chunks.length > MAX_CHUNKS) {
     throw new ImportError("too_much_content", "This course export is too large to read in one go.");
   }
@@ -151,7 +151,7 @@ export async function normalizeText(
     blocks,
     wordCount: blocks.reduce((n, b) => n + countWords(b.text), 0),
   };
-  const chunks = buildChunks([doc], { maxChars: options.maxChunkChars ?? 12_000 });
+  const chunks = buildChunks([doc], { maxChars: options.maxChunkChars ?? 8_000 });
   if (chunks.length > MAX_CHUNKS) {
     throw new ImportError("too_much_content", "That text is too large to read in one go.");
   }

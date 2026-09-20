@@ -32,6 +32,8 @@ export interface CompletionResult {
   model: string;
   text: string;
   latencyMs: number;
+  /** "length" means the reply was cut off by the output limit and is incomplete. */
+  finishReason?: string | null;
 }
 
 export interface LlmClient {
@@ -72,7 +74,7 @@ export function createNemotronClient(config: NemotronConfig): LlmClient {
           model,
           messages: request.messages,
           temperature: request.temperature ?? 0,
-          max_tokens: request.maxTokens ?? 4096,
+          max_tokens: request.maxTokens ?? 8192,
           stream: false,
           ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         }),
@@ -117,7 +119,12 @@ export function createNemotronClient(config: NemotronConfig): LlmClient {
     if (typeof content !== "string" || content.trim() === "") {
       throw new ImportError("malformed_model_response", "The analysis reply was empty.");
     }
-    return { model: payload.model ?? model, text: content, latencyMs: Date.now() - started };
+    return {
+      model: payload.model ?? model,
+      text: content,
+      latencyMs: Date.now() - started,
+      finishReason: payload.choices?.[0]?.finish_reason ?? null,
+    };
   }
 
   return {

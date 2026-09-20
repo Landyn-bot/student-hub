@@ -44,7 +44,8 @@ export const SYSTEM_PROMPT = [
   '- "class_meeting": a recurring class or lab session with weekdays and times.',
   '- "policy": a rule about late work, attendance, missed exams, academic integrity or grading weights.',
   '  Put numbers into parameters, e.g. {"penalty_percent_per_day": 10, "max_late_days": 5} or {"grace_absences": 2}.',
-  '- "source_quote": copy ONE sentence or table row from the excerpt, word for word, that states the fact (max 300 characters). Never paraphrase it.',
+  '- "source_quote": copy ONE sentence or table row from the excerpt, word for word, that states the fact (max 200 characters). Never paraphrase it.',
+  "- Keep the reply compact: leave description null unless it adds something the title does not.",
   '- "confidence": 0 to 1. Use 0.9+ only when the excerpt states the fact plainly. Use 0.5 or lower when you had to infer anything.',
   "- Dates are ISO YYYY-MM-DD and times are 24-hour HH:MM. If a date has no year, use the term's year.",
   '- If a date is relative ("Week 4", "the Friday after break") and the term start date is given, resolve it; otherwise set date to null.',
@@ -82,11 +83,47 @@ export interface ChunkOutcome {
   error?: { code: ImportErrorCode; message: string };
 }
 
+/** Cut a chunk in two at a block boundary near the middle, keeping each half's section marks. */
+export function splitChunk(chunk: IrChunk): [IrChunk, IrChunk] | null {
+  if (chunk.text.length < 1_500) return null;
+  const mid = Math.floor(chunk.text.length / 2);
+  let cut = chunk.text.indexOf("\n\n", mid);
+  if (cut === -1 || cut > chunk.text.length * 0.85) cut = chunk.text.lastIndexOf("\n", mid);
+  if (cut <= 0) return null;
+
+  const first = chunk.text.slice(0, cut).trim();
+  const rest = chunk.text.slice(cut);
+  const second = rest.trim();
+  if (!first || !second) return null;
+  const shift = cut + (rest.length - rest.trimStart().length);
+
+  const before = chunk.sections.filter((m) => m.offset < cut);
+  const after = chunk.sections.filter((m) => m.offset >= shift);
+  const carried = before[before.length - 1]?.section ?? chunk.section;
+
+  return [
+    { ...chunk, id: `${chunk.id}a`, text: first, sections: before },
+    {
+      ...chunk,
+      id: `${chunk.id}b`,
+      text: second,
+      section: after[0]?.section ?? carried,
+      sections: [
+        { offset: 0, section: after[0]?.section ?? carried },
+        ...after.slice(1).map((m) => ({ ...m, offset: m.offset - shift })),
+      ],
+    },
+  ];
+}
+
+const MAX_SPLIT_DEPTH = 2;
+
 export async function extractChunk(
   chunk: IrChunk,
   filename: string,
   term: TermContext,
   llm: LlmClient,
+  depth = 0,
 ): Promise<ChunkOutcome> {
   const started = Date.now();
   const fail = (code: ImportErrorCode, message: string, model: string | null): ChunkOutcome => ({
@@ -110,6 +147,31 @@ export async function extractChunk(
   try {
     const first = await llm.complete({ messages });
     model = first.model;
+
+    // A reply cut off by the output limit is incomplete even if it looks like JSON: read the
+    // two halves of the section separately rather than lose the tail.
+    if (first.finishReason === "length" && depth < MAX_SPLIT_DEPTH) {
+      const halves = splitChunk(chunk);
+      if (halves) {
+        const parts = [
+          await extractChunk(halves[0], filename, term, llm, depth + 1),
+          await extractChunk(halves[1], filename, term, llm, depth + 1),
+        ];
+        const failed = parts.find((part) => !part.ok);
+        if (failed) return { ...failed, chunkId: chunk.id, latencyMs: Date.now() - started };
+        return {
+          chunkId: chunk.id,
+          ok: true,
+          records: parts.flatMap((part) => part.records),
+          course: parts.reduce((acc, part) => mergeCourse(acc, part.course), EMPTY_COURSE),
+          dropped: parts.reduce((n, part) => n + part.dropped, 0),
+          repaired: parts.some((part) => part.repaired),
+          model: parts[1]?.model ?? model,
+          latencyMs: Date.now() - started,
+        };
+      }
+    }
+
     let validation = validateModelOutput(extractJsonObject(first.text), {
       chunk,
       referenceYear: term.referenceYear,
