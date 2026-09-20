@@ -111,6 +111,14 @@ function CourseOverviewPage() {
 
   const title = course?.name ?? plannerCourse?.name ?? "Course";
 
+  // The manual form only ever offers this one class.
+  const formCourse: PlannerCourse = plannerCourse ?? {
+    id: courseId,
+    name: title,
+    courseCode: course?.course_code ?? null,
+    instructor: course?.instructor ?? null,
+  };
+
   return (
     <>
       <div className="mb-3">
