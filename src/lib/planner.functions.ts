@@ -21,7 +21,17 @@ export type PlannerItem = {
   sourceText: string | null;
   sourceName: string | null;
   aiGenerated: boolean;
+  /**
+   * True only for work a student actually hands in. Quizzes, tests and exams are
+   * sat on a fixed day rather than completed early, so they are never checkable.
+   */
+  completable: boolean;
 };
+
+/** Quizzes, tests and exams are scheduled sittings, not to-dos. */
+export function isSitting(type: string): boolean {
+  return /quiz|exam|test|midterm|final/i.test(type);
+}
 
 export type PlannerCourse = {
   id: string;
