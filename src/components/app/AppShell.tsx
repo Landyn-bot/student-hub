@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/app-button";
 import { supabase } from "@/integrations/supabase/client";
+import { setGuestMode } from "@/lib/guest/mode";
 
 import { SidebarNav } from "./SidebarNav";
 
@@ -12,7 +13,16 @@ function initials(name: string) {
   return name.trim().charAt(0).toUpperCase() || "S";
 }
 
-export function AppShell({ children, displayName }: { children: ReactNode; displayName: string }) {
+export function AppShell({
+  children,
+  displayName,
+  guest = false,
+}: {
+  children: ReactNode;
+  displayName: string;
+  /** True when the planner is running without an account, saved in this browser. */
+  guest?: boolean;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -21,7 +31,12 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
     // Clear private cached data before ending the cloud session.
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    if (guest) {
+      // Leaving guest mode keeps the browser-saved work for next time.
+      setGuestMode(false);
+    } else {
+      await supabase.auth.signOut();
+    }
     navigate({ to: "/auth", replace: true });
   }
 
@@ -67,6 +82,11 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
+            {guest ? (
+              <Button variant="accent" size="sm" className="h-9" asChild>
+                <Link to="/auth">Save to an account</Link>
+              </Button>
+            ) : null}
             <Button
               variant="soft"
               size="sm"
@@ -77,7 +97,7 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
                 {initials(displayName)}
               </span>
               <span className="hidden text-sm font-medium sm:inline">{displayName}</span>
-              <span className="text-xs text-foreground/40">Sign out</span>
+              <span className="text-xs text-foreground/40">{guest ? "Leave" : "Sign out"}</span>
             </Button>
           </div>
         </div>

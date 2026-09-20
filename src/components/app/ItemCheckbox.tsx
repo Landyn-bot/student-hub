@@ -1,14 +1,15 @@
 // A small tick box for handed-in work. Quizzes, tests and exams are never checkable,
 // so this renders a quiet spacer for them and keeps the rows aligned.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2 } from "lucide-react";
 
 import { setAssignmentDone } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export function ItemCheckbox({ id, completable }: { id: string; completable: boolean }) {
-  const markDone = useServerFn(setAssignmentDone);
+  const markDone = useAppFn(setAssignmentDone, guestStore.setAssignmentDone);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({

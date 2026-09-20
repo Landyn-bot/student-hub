@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
@@ -12,6 +11,8 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { coursePalette } from "@/lib/course-colors";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -42,7 +43,7 @@ function dayKey(date: Date): string {
 }
 
 function CalendarPage() {
-  const fetchPlanner = useServerFn(getPlannerData);
+  const fetchPlanner = useAppFn(getPlannerData, guestStore.getPlannerData);
   const [view, setView] = useState<View>("month");
   const [courseFilter, setCourseFilter] = useState<string | null>(null);
   const [month, setMonth] = useState(() => {

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
 import { CourseForm } from "@/components/app/CourseForm";
@@ -11,6 +10,8 @@ import { Panel } from "@/components/ui/panel-surface";
 import { listCourses, type Course } from "@/lib/courses.functions";
 import { coursePalette } from "@/lib/course-colors";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/courses/")({
   head: () => ({
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/courses/")({
 });
 
 function CoursesPage() {
-  const fetchCourses = useServerFn(listCourses);
+  const fetchCourses = useAppFn(listCourses, guestStore.listCourses);
   const { data, isPending, isError, refetch, isRefetching } = useQuery({
     queryKey: ["courses"],
     queryFn: () => fetchCourses(),

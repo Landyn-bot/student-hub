@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { CalendarClock, CalendarDays, GraduationCap, Sparkles, Sun } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
+import { GuestDataBanner } from "@/components/app/GuestDataBanner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote, LoadingRows, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
@@ -17,6 +17,8 @@ import { getOnboardingState } from "@/lib/onboarding.functions";
 import { sortByPriority } from "@/lib/item-priority";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 /** "Due tomorrow", "Due Friday", "2 days past due" — never invented, always from the stored date. */
 function dueLabel(item: FocusItem): string {
@@ -74,9 +76,9 @@ function addDays(key: string, days: number): string {
 }
 
 function DashboardPage() {
-  const fetchOnboarding = useServerFn(getOnboardingState);
-  const fetchPlanner = useServerFn(getPlannerData);
-  const fetchFocus = useServerFn(getFocusPlan);
+  const fetchOnboarding = useAppFn(getOnboardingState, guestStore.getOnboardingState);
+  const fetchPlanner = useAppFn(getPlannerData, guestStore.getPlannerData);
+  const fetchFocus = useAppFn(getFocusPlan, guestStore.getFocusPlan);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
 
   const { data: onboarding } = useQuery({
@@ -150,6 +152,7 @@ function DashboardPage() {
 
   return (
     <>
+      <GuestDataBanner />
       <PageHeader
         eyebrow={onboarding?.term?.name ?? "Your current semester"}
         title="Your semester, kept in one glance."

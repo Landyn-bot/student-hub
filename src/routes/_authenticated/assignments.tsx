@@ -2,7 +2,6 @@
 // dashboard and calendar use. No separate data source, no new model.
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
@@ -16,6 +15,8 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { coursePalette } from "@/lib/course-colors";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/assignments")({
   head: () => ({
@@ -54,7 +55,7 @@ const FILTERS: { key: AssignmentFilter; label: string }[] = [
 ];
 
 function AssignmentsPage() {
-  const fetchPlanner = useServerFn(getPlannerData);
+  const fetchPlanner = useAppFn(getPlannerData, guestStore.getPlannerData);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
   const [filter, setFilter] = useState<AssignmentFilter>("active");
   const [adding, setAdding] = useState(false);

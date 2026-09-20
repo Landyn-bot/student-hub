@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 
@@ -16,6 +15,8 @@ import {
   listTransactions,
   type FinanceTransaction,
 } from "@/lib/finances.functions";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/finances")({
   head: () => ({
@@ -64,9 +65,9 @@ function formatDate(iso: string): string {
 
 function FinancesPage() {
   const queryClient = useQueryClient();
-  const fetchTransactions = useServerFn(listTransactions);
-  const runAdd = useServerFn(addTransaction);
-  const runDelete = useServerFn(deleteTransaction);
+  const fetchTransactions = useAppFn(listTransactions, guestStore.listTransactions);
+  const runAdd = useAppFn(addTransaction, guestStore.addTransaction);
+  const runDelete = useAppFn(deleteTransaction, guestStore.deleteTransaction);
 
   const {
     data: transactions = [],

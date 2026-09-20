@@ -2,7 +2,6 @@
 // has to be imported from a file — and edit that item later. Writes through the
 // same planner data everything else on the site reads.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/app-button";
@@ -13,6 +12,8 @@ import {
   type PlannerCourse,
   type PlannerItem,
 } from "@/lib/planner.functions";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 const KINDS: { key: ManualItemKind; label: string }[] = [
   { key: "assignment", label: "Assignment" },
@@ -51,8 +52,8 @@ export function ManualItemForm({
   onDone?: () => void;
 }) {
   const queryClient = useQueryClient();
-  const runAdd = useServerFn(addManualItem);
-  const runUpdate = useServerFn(updateManualItem);
+  const runAdd = useAppFn(addManualItem, guestStore.addManualItem);
+  const runUpdate = useAppFn(updateManualItem, guestStore.updateManualItem);
 
   const [kind, setKind] = useState<ManualItemKind>(editing ? kindOf(editing) : "assignment");
   const [title, setTitle] = useState(editing?.title ?? "");

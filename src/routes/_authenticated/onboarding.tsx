@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,6 +19,8 @@ import {
   type PlanningStyle,
 } from "@/lib/onboarding.functions";
 import { guessCurrentSemester } from "@/lib/semester";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -64,8 +65,8 @@ const planningOptions: Array<{
 function OnboardingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fetchOnboarding = useServerFn(getOnboardingState);
-  const saveOnboarding = useServerFn(completeOnboarding);
+  const fetchOnboarding = useAppFn(getOnboardingState, guestStore.getOnboardingState);
+  const saveOnboarding = useAppFn(completeOnboarding, guestStore.completeOnboarding);
   // Today's date decides the semester we suggest, so students only confirm it.
   const [suggested] = useState(() => guessCurrentSemester());
   const [step, setStep] = useState(0);

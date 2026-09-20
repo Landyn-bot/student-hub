@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +13,8 @@ import {
   getOnboardingState,
   type PlanningStyle,
 } from "@/lib/onboarding.functions";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -36,10 +37,10 @@ const fieldClass =
   "mt-1 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary";
 
 function SettingsPage() {
-  const fetchProfile = useServerFn(getProfile);
-  const saveProfile = useServerFn(updateProfile);
-  const fetchOnboarding = useServerFn(getOnboardingState);
-  const saveOnboarding = useServerFn(completeOnboarding);
+  const fetchProfile = useAppFn(getProfile, guestStore.getProfile);
+  const saveProfile = useAppFn(updateProfile, guestStore.updateProfile);
+  const fetchOnboarding = useAppFn(getOnboardingState, guestStore.getOnboardingState);
+  const saveOnboarding = useAppFn(completeOnboarding, guestStore.completeOnboarding);
   const queryClient = useQueryClient();
 
   const { data } = useQuery({
