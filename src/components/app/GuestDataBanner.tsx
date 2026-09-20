@@ -6,10 +6,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/app-button";
+import { useGuestMode } from "@/lib/guest/mode";
 import { clearGuestData, guestDataCount, readGuestData } from "@/lib/guest/store";
 import { importGuestData } from "@/lib/guest-migrate.functions";
 
-export function GuestDataBanner({ guest }: { guest: boolean }) {
+export function GuestDataBanner() {
+  const guest = useGuestMode();
   const runImport = useServerFn(importGuestData);
   const queryClient = useQueryClient();
   const [dismissed, setDismissed] = useState(false);
