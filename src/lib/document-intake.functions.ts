@@ -19,17 +19,15 @@ const ReadDocumentInput = z.object({
 });
 
 export type ReadDocumentResult =
-  | { ok: true; text: string }
-  | { ok: false; kind: string; error: string };
+  { ok: true; text: string } | { ok: false; kind: string; error: string };
 
 export const readDocumentText = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ReadDocumentInput.parse(input))
   .handler(async ({ data, context }): Promise<ReadDocumentResult> => {
     // Server-only import keeps the gateway client and its key out of the browser bundle.
-    const { transcribeDocument, DocumentReadError } = await import(
-      "@/lib/server/document-text.server"
-    );
+    const { transcribeDocument, DocumentReadError } =
+      await import("@/lib/server/document-text.server");
 
     console.log("[read-document] request", {
       userId: context.userId,

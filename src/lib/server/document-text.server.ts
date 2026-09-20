@@ -96,7 +96,10 @@ export async function transcribeDocument(input: {
       throw new DocumentReadError("unauthorized", "The reading service rejected the request.");
     }
     if (response.status === 429) {
-      throw new DocumentReadError("rate_limited", "The reading service is busy. Try again shortly.");
+      throw new DocumentReadError(
+        "rate_limited",
+        "The reading service is busy. Try again shortly.",
+      );
     }
     throw new DocumentReadError("upstream", "The reading service is temporarily unavailable.");
   }
