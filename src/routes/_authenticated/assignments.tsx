@@ -5,6 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
+import { ItemCheckbox } from "@/components/app/ItemCheckbox";
 import { PageHeader } from "@/components/app/PageHeader";
 import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { ErrorNote, LoadingRows } from "@/components/app/StatusNote";
@@ -95,12 +96,13 @@ function AssignmentsPage() {
             {items.map((item) => {
               const palette = coursePalette(item.courseId);
               return (
-                <li key={item.id}>
+                <li key={item.id} className="flex items-stretch">
+                  <ItemCheckbox id={item.id} completable={item.completable} />
                   <button
                     type="button"
                     onClick={() => setSelected(item)}
                     className={cn(
-                      "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+                      "inset-tile ml-2 flex w-full min-w-0 items-stretch gap-3 overflow-hidden bg-background text-left transition",
                       palette.hover,
                     )}
                   >

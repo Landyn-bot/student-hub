@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 
+import { ItemCheckbox } from "@/components/app/ItemCheckbox";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote, LoadingRows, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
@@ -351,12 +352,13 @@ function ItemRow({
   const palette = coursePalette(item.courseId);
 
   return (
-    <li>
+    <li className="flex items-stretch">
+      <ItemCheckbox id={item.id} completable={item.completable} />
       <button
         type="button"
         onClick={() => onOpen(item)}
         className={cn(
-          "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+          "inset-tile ml-2 flex w-full min-w-0 items-stretch gap-3 overflow-hidden bg-background text-left transition",
           palette.hover,
         )}
       >
