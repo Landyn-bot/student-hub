@@ -193,7 +193,10 @@ function newEntry(file: File, kind: SourceKind): CourseImport {
 function guessCourseName(extraction: CourseExtraction | null, fileName: string): string {
   const fromModel = extraction?.course.course_name?.trim();
   if (fromModel) return fromModel;
-  const base = fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  const base = fileName
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
   return base || fileName;
 }
 
