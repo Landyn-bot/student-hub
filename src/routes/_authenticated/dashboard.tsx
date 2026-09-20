@@ -214,16 +214,16 @@ function DashboardPage() {
           />
         ) : (
           <ul className="space-y-2">
-            {focus?.items.map((item) => {
+            {focus?.items.map((item, index) => {
               const match = planner?.items.find((entry) => entry.id === item.id) ?? null;
               const palette = coursePalette(match?.courseId);
               return (
-                <li key={item.id}>
+                <li key={item.id} className="rise-in" style={{ animationDelay: `${index * 55}ms` }}>
                   <button
                     type="button"
                     onClick={() => match && setSelected(match)}
                     className={cn(
-                      "inset-tile flex w-full items-stretch gap-3 overflow-hidden bg-background text-left transition",
+                      "inset-tile tile-lift flex w-full items-stretch gap-3 overflow-hidden bg-background text-left",
                       palette.hover,
                     )}
                   >
@@ -231,6 +231,7 @@ function DashboardPage() {
                       className={cn("w-1.5 shrink-0 self-stretch", palette.solid)}
                       aria-hidden
                     />
+
                     <span className="min-w-0 flex-1 py-3">
                       <span className="block truncate text-sm font-medium text-foreground">
                         {item.title}
