@@ -4,6 +4,7 @@ import { CalendarClock, CalendarDays, GraduationCap, Sparkles, Sun } from "lucid
 import { useMemo, useState } from "react";
 
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
+import { GuestDataBanner } from "@/components/app/GuestDataBanner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote, LoadingRows, LoadingTiles } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
@@ -151,6 +152,7 @@ function DashboardPage() {
 
   return (
     <>
+      <GuestDataBanner />
       <PageHeader
         eyebrow={onboarding?.term?.name ?? "Your current semester"}
         title="Your semester, kept in one glance."

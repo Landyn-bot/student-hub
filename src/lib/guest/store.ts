@@ -285,9 +285,7 @@ export async function addCourse(args: { data: CourseInput }): Promise<Course> {
   const fields = cleanCourse(args.data);
   let created: Course | null = null;
   mutate((data) => {
-    const existing = data.courses.find(
-      (c) => c.name.toLowerCase() === fields.name.toLowerCase(),
-    );
+    const existing = data.courses.find((c) => c.name.toLowerCase() === fields.name.toLowerCase());
     if (existing) {
       created = existing;
       return;

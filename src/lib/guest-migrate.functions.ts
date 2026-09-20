@@ -25,7 +25,10 @@ const guestPayload = z.object({
         title: z.string().trim().min(1).max(300),
         description: z.string().max(2_000).nullable(),
         courseId: z.string().max(64).nullable(),
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+        date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
         time: z.string().max(8).nullable(),
         done: z.boolean(),
       }),
