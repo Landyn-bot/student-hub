@@ -36,9 +36,26 @@ export const Route = createFileRoute("/_authenticated/assignments")({
   component: AssignmentsPage,
 });
 
+/** Local YYYY-MM-DD, so "overdue" follows the student's own clock. */
+function todayKey(): string {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+type AssignmentFilter = "active" | "overdue" | "completed";
+
+const FILTERS: { key: AssignmentFilter; label: string }[] = [
+  { key: "active", label: "Active" },
+  { key: "overdue", label: "Overdue" },
+  { key: "completed", label: "Completed" },
+];
+
 function AssignmentsPage() {
   const fetchPlanner = useServerFn(getPlannerData);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
+  const [filter, setFilter] = useState<AssignmentFilter>("active");
 
   const { data, isPending, isError, refetch, isRefetching } = useQuery({
     queryKey: ["planner"],
@@ -47,13 +64,31 @@ function AssignmentsPage() {
 
   const items = useMemo(() => {
     const all = data?.items ?? [];
+    const today = todayKey();
+    const matches = (item: PlannerItem) => {
+      if (filter === "completed") return item.done;
+      if (filter === "overdue") return !item.done && Boolean(item.date) && item.date! < today;
+      // Active: work still to do, whether its date is coming up or unknown.
+      return !item.done;
+    };
     return all
+      .filter(matches)
       .slice()
       .sort(
         (a, b) =>
           (a.date ?? "9999").localeCompare(b.date ?? "9999") ||
           (a.time ?? "").localeCompare(b.time ?? ""),
       );
+  }, [data, filter]);
+
+  const counts = useMemo(() => {
+    const all = data?.items ?? [];
+    const today = todayKey();
+    return {
+      active: all.filter((item) => !item.done).length,
+      overdue: all.filter((item) => !item.done && Boolean(item.date) && item.date! < today).length,
+      completed: all.filter((item) => item.done).length,
+    };
   }, [data]);
 
   return (
