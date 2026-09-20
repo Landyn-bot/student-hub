@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
 import { ManualItemForm } from "@/components/app/ManualItemForm";
@@ -19,6 +18,8 @@ import {
   type PlannerItem,
 } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export function formatDay(key: string): string {
   return new Date(`${key}T00:00:00`).toLocaleDateString(undefined, {
@@ -44,8 +45,8 @@ export function PlannerItemDetails({
 }) {
   const palette = coursePalette(item?.courseId);
   const queryClient = useQueryClient();
-  const runDelete = useServerFn(deleteManualItem);
-  const fetchPlanner = useServerFn(getPlannerData);
+  const runDelete = useAppFn(deleteManualItem, guestStore.deleteManualItem);
+  const fetchPlanner = useAppFn(getPlannerData, guestStore.getPlannerData);
 
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);

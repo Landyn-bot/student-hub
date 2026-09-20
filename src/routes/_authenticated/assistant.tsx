@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Bot, CircleAlert } from "lucide-react";
@@ -20,6 +19,8 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { askAssistant, getAssistantChat, type AssistantMessage } from "@/lib/assistant.functions";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   head: () => ({
@@ -52,8 +53,8 @@ const SUGGESTIONS = [
 type ChatStatus = "ready" | "submitted" | "error";
 
 function AssistantPage() {
-  const loadChat = useServerFn(getAssistantChat);
-  const ask = useServerFn(askAssistant);
+  const loadChat = useAppFn(getAssistantChat, guestStore.getAssistantChat);
+  const ask = useAppFn(askAssistant, guestStore.askAssistant);
 
   const chatQuery = useQuery({ queryKey: ["assistant-chat"], queryFn: () => loadChat() });
 

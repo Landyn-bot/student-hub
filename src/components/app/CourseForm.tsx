@@ -1,11 +1,12 @@
 // Small form for adding a class by hand or renaming one already on the shelf,
 // so a course never has to come from a file import.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/app-button";
 import { addCourse, updateCourse, type Course } from "@/lib/courses.functions";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -19,8 +20,8 @@ export function CourseForm({
   onDone?: () => void;
 }) {
   const queryClient = useQueryClient();
-  const runAdd = useServerFn(addCourse);
-  const runUpdate = useServerFn(updateCourse);
+  const runAdd = useAppFn(addCourse, guestStore.addCourse);
+  const runUpdate = useAppFn(updateCourse, guestStore.updateCourse);
 
   const [name, setName] = useState(editing?.name ?? "");
   const [courseCode, setCourseCode] = useState(editing?.course_code ?? "");

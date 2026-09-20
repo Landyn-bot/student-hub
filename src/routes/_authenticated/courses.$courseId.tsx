@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, CalendarClock, CheckCircle2, Clock3, History } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -18,6 +17,8 @@ import { listCourses } from "@/lib/courses.functions";
 import { isOverdue, sortByPriority, todayKey } from "@/lib/item-priority";
 import { getPlannerData, type PlannerCourse, type PlannerItem } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
+import * as guestStore from "@/lib/guest/store";
+import { useAppFn } from "@/lib/guest/use-app-fn";
 
 export const Route = createFileRoute("/_authenticated/courses/$courseId")({
   head: () => ({
@@ -51,8 +52,8 @@ const GROUPS: { key: string; label: string; match: (type: string) => boolean }[]
 
 function CourseOverviewPage() {
   const { courseId } = Route.useParams();
-  const fetchPlanner = useServerFn(getPlannerData);
-  const fetchCourses = useServerFn(listCourses);
+  const fetchPlanner = useAppFn(getPlannerData, guestStore.getPlannerData);
+  const fetchCourses = useAppFn(listCourses, guestStore.listCourses);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
   const [editing, setEditing] = useState(false);
   // Add an assignment, quiz, exam or project straight onto this class.
