@@ -555,7 +555,7 @@ function ImportSemesterPage() {
         });
       }
     },
-    [analyze, patch, queryClient, readDocument, save],
+    [analyze, askCourseName, patch, queryClient, readDocument, save],
   );
 
   /** Run a set of files with bounded concurrency; each one succeeds or fails on its own. */
