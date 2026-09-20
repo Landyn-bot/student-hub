@@ -106,7 +106,28 @@ function AssignmentsPage() {
       <Panel>
         <PanelHeader
           title="All coursework"
-          aside={items.length > 0 ? `${items.length} items` : undefined}
+          aside={
+            <div className="flex gap-1 rounded-full bg-foreground/5 p-1">
+              {FILTERS.map((entry) => (
+                <button
+                  key={entry.key}
+                  type="button"
+                  onClick={() => setFilter(entry.key)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition",
+                    filter === entry.key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-foreground/55 hover:text-foreground",
+                  )}
+                >
+                  {entry.label}
+                  {counts[entry.key] > 0 ? (
+                    <span className="ml-1 text-foreground/45">{counts[entry.key]}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          }
         />
         {isPending ? (
           <LoadingRows rows={4} />
@@ -117,15 +138,27 @@ function AssignmentsPage() {
             retrying={isRefetching}
           />
         ) : items.length === 0 ? (
-          <EmptyState
-            title="No assignments tracked"
-            description="Upload your course files and every dated piece of work gathers here."
-            action={
-              <Button variant="brand" asChild>
-                <Link to="/import">Upload courses</Link>
-              </Button>
-            }
-          />
+          filter === "active" ? (
+            <EmptyState
+              title="Nothing active right now"
+              description="Upload your course files and every dated piece of work gathers here."
+              action={
+                <Button variant="brand" asChild>
+                  <Link to="/import">Upload courses</Link>
+                </Button>
+              }
+            />
+          ) : filter === "overdue" ? (
+            <EmptyState
+              title="Nothing overdue"
+              description="Everything with a past date is checked off. Nice work."
+            />
+          ) : (
+            <EmptyState
+              title="Nothing completed yet"
+              description="Tick the box beside an assignment when you've handed it in."
+            />
+          )
         ) : (
           <ul className="space-y-2">
             {items.map((item) => {
