@@ -329,8 +329,132 @@ export const addManualItem = createServerFn({ method: "POST" })
         ai_generated: false,
         review_status: "approved",
       });
-      if (insert.error) throw new Error("We could not save that item.");
+    if (insert.error) throw new Error("We could not save that item.");
     }
 
+    return { ok: true };
+  });
+
+/** Editable fields for an item the student added by hand. */
+export type UpdateManualItemInput = {
+  id: string;
+  kind: ManualItemKind;
+  title: string;
+  courseId?: string | null;
+  courseName?: string | null;
+  date: string;
+  time?: string | null;
+  notes?: string | null;
+};
+
+/**
+ * Resolves the class for a manual add/edit: an existing one the student picked,
+ * or a new one they typed (reusing a same-named class when there is one).
+ */
+async function resolveCourse(
+  supabase: SupabaseClient,
+  userId: string,
+  courseId: string | null | undefined,
+  courseName: string | null | undefined,
+): Promise<string | null> {
+  if (courseId) {
+    const owned = await supabase
+      .from("courses")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("id", courseId)
+      .maybeSingle();
+    if (!owned.data) throw new Error("That class could not be found.");
+    return owned.data.id;
+  }
+  const name = courseName?.trim();
+  if (!name) return null;
+  const existing = await supabase
+    .from("courses")
+    .select("id")
+    .eq("user_id", userId)
+    .ilike("name", name)
+    .maybeSingle();
+  if (existing.data) return existing.data.id;
+  const created = await supabase
+    .from("courses")
+    .insert({ user_id: userId, name, source: "manual" })
+    .select("id")
+    .single();
+  if (created.error || !created.data) throw new Error("We could not save that class.");
+  return created.data.id;
+}
+
+/**
+ * Updates one hand-entered item. Only rows that are not AI generated can be
+ * edited here — imported rows keep their extracted source data intact.
+ */
+export const updateManualItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: UpdateManualItemInput) => input)
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase, userId } = context;
+
+    const title = data.title.trim();
+    if (!title) throw new Error("Give it a title.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) throw new Error("Pick a date.");
+    const time = data.time?.trim() ? data.time.trim() : null;
+    const notes = data.notes?.trim() ? data.notes.trim() : null;
+    const courseId = await resolveCourse(supabase, userId, data.courseId, data.courseName);
+
+    if (data.kind === "quiz" || data.kind === "exam") {
+      const update = await supabase
+        .from("exams")
+        .update({
+          title,
+          description: notes,
+          exam_date: data.date,
+          start_time: time,
+          course_id: courseId,
+          edited_by_user: true,
+          edited_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("id", data.id)
+        .eq("ai_generated", false);
+      if (update.error) throw new Error("We could not update that item.");
+    } else {
+      const update = await supabase
+        .from("assignments")
+        .update({
+          title,
+          description: notes,
+          due_date: data.date,
+          due_time: time,
+          course_id: courseId,
+          edited_by_user: true,
+          edited_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("id", data.id)
+        .eq("ai_generated", false);
+      if (update.error) throw new Error("We could not update that item.");
+    }
+
+    return { ok: true };
+  });
+
+/**
+ * Deletes one hand-entered item. Imported (AI generated) rows are refused so a
+ * delete here can never silently discard extracted source data.
+ */
+export const deleteManualItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; kind: ManualItemKind }) => input)
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase, userId } = context;
+    const table = data.kind === "quiz" || data.kind === "exam" ? "exams" : "assignments";
+    const result = await supabase
+      .from(table)
+      .delete()
+      .eq("user_id", userId)
+      .eq("id", data.id)
+      .eq("ai_generated", false);
+    if (result.error) throw new Error("We could not delete that item.");
     return { ok: true };
   });
