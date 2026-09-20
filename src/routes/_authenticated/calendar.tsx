@@ -65,8 +65,9 @@ function CalendarPage() {
 
   const courses = planner?.courses ?? [];
   const items = useMemo(() => {
-    const dated = (planner?.items ?? []).filter((item): item is PlannerItem & { date: string } =>
-      Boolean(item.date),
+    // Checked-off work stays off the calendar; everything else with a date shows.
+    const dated = (planner?.items ?? []).filter(
+      (item): item is PlannerItem & { date: string } => Boolean(item.date) && !item.done,
     );
     return courseFilter ? dated.filter((item) => item.courseId === courseFilter) : dated;
   }, [planner, courseFilter]);

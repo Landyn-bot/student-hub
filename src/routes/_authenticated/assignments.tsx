@@ -36,9 +36,26 @@ export const Route = createFileRoute("/_authenticated/assignments")({
   component: AssignmentsPage,
 });
 
+/** Local YYYY-MM-DD, so "overdue" follows the student's own clock. */
+function todayKey(): string {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+type AssignmentFilter = "active" | "overdue" | "completed";
+
+const FILTERS: { key: AssignmentFilter; label: string }[] = [
+  { key: "active", label: "Active" },
+  { key: "overdue", label: "Overdue" },
+  { key: "completed", label: "Completed" },
+];
+
 function AssignmentsPage() {
   const fetchPlanner = useServerFn(getPlannerData);
   const [selected, setSelected] = useState<PlannerItem | null>(null);
+  const [filter, setFilter] = useState<AssignmentFilter>("active");
 
   const { data, isPending, isError, refetch, isRefetching } = useQuery({
     queryKey: ["planner"],
@@ -47,13 +64,31 @@ function AssignmentsPage() {
 
   const items = useMemo(() => {
     const all = data?.items ?? [];
+    const today = todayKey();
+    const matches = (item: PlannerItem) => {
+      if (filter === "completed") return item.done;
+      if (filter === "overdue") return !item.done && Boolean(item.date) && item.date! < today;
+      // Active: work still to do, whether its date is coming up or unknown.
+      return !item.done;
+    };
     return all
+      .filter(matches)
       .slice()
       .sort(
         (a, b) =>
           (a.date ?? "9999").localeCompare(b.date ?? "9999") ||
           (a.time ?? "").localeCompare(b.time ?? ""),
       );
+  }, [data, filter]);
+
+  const counts = useMemo(() => {
+    const all = data?.items ?? [];
+    const today = todayKey();
+    return {
+      active: all.filter((item) => !item.done).length,
+      overdue: all.filter((item) => !item.done && Boolean(item.date) && item.date! < today).length,
+      completed: all.filter((item) => item.done).length,
+    };
   }, [data]);
 
   return (
@@ -71,7 +106,28 @@ function AssignmentsPage() {
       <Panel>
         <PanelHeader
           title="All coursework"
-          aside={items.length > 0 ? `${items.length} items` : undefined}
+          aside={
+            <div className="flex gap-1 rounded-full bg-foreground/5 p-1">
+              {FILTERS.map((entry) => (
+                <button
+                  key={entry.key}
+                  type="button"
+                  onClick={() => setFilter(entry.key)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition",
+                    filter === entry.key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-foreground/55 hover:text-foreground",
+                  )}
+                >
+                  {entry.label}
+                  {counts[entry.key] > 0 ? (
+                    <span className="ml-1 text-foreground/45">{counts[entry.key]}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          }
         />
         {isPending ? (
           <LoadingRows rows={4} />
@@ -82,15 +138,27 @@ function AssignmentsPage() {
             retrying={isRefetching}
           />
         ) : items.length === 0 ? (
-          <EmptyState
-            title="No assignments tracked"
-            description="Upload your course files and every dated piece of work gathers here."
-            action={
-              <Button variant="brand" asChild>
-                <Link to="/import">Upload courses</Link>
-              </Button>
-            }
-          />
+          filter === "active" ? (
+            <EmptyState
+              title="Nothing active right now"
+              description="Upload your course files and every dated piece of work gathers here."
+              action={
+                <Button variant="brand" asChild>
+                  <Link to="/import">Upload courses</Link>
+                </Button>
+              }
+            />
+          ) : filter === "overdue" ? (
+            <EmptyState
+              title="Nothing overdue"
+              description="Everything with a past date is checked off. Nice work."
+            />
+          ) : (
+            <EmptyState
+              title="Nothing completed yet"
+              description="Tick the box beside an assignment when you've handed it in."
+            />
+          )
         ) : (
           <ul className="space-y-2">
             {items.map((item) => {
@@ -122,7 +190,12 @@ function AssignmentsPage() {
                       </span>
                     </span>
                     <span className="shrink-0 py-3 pr-3 text-right text-xs text-foreground/60">
-                      {item.date ? formatDay(item.date) : "No date"}
+                      {!item.done && item.date && item.date < todayKey() ? (
+                        <span className="mb-1 inline-block rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                          Overdue
+                        </span>
+                      ) : null}
+                      <span className="block">{item.date ? formatDay(item.date) : "No date"}</span>
                       {item.time ? <span className="block">{item.time}</span> : null}
                     </span>
                   </button>
