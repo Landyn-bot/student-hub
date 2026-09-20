@@ -25,6 +25,7 @@ import { Route as AuthenticatedImportReviewRouteImport } from './routes/_authent
 import { Route as AuthenticatedNemotronTestRouteImport } from './routes/_authenticated/nemotron-test'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -109,6 +110,12 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCoursesCourseIdRoute =
+  AuthenticatedCoursesCourseIdRouteImport.update({
+    id: '/$courseId',
+    path: '/$courseId',
+    getParentRoute: () => AuthenticatedCoursesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,7 +124,7 @@ export interface FileRoutesByFullPath {
   '/assignments': typeof AuthenticatedAssignmentsRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/calendar': typeof AuthenticatedCalendarRoute
-  '/courses': typeof AuthenticatedCoursesRoute
+  '/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finances': typeof AuthenticatedFinancesRoute
   '/import': typeof AuthenticatedImportRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,7 +142,7 @@ export interface FileRoutesByTo {
   '/assignments': typeof AuthenticatedAssignmentsRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/calendar': typeof AuthenticatedCalendarRoute
-  '/courses': typeof AuthenticatedCoursesRoute
+  '/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finances': typeof AuthenticatedFinancesRoute
   '/import': typeof AuthenticatedImportRoute
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -153,7 +162,7 @@ export interface FileRoutesById {
   '/_authenticated/assignments': typeof AuthenticatedAssignmentsRoute
   '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
-  '/_authenticated/courses': typeof AuthenticatedCoursesRoute
+  '/_authenticated/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finances': typeof AuthenticatedFinancesRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/nemotron-test': typeof AuthenticatedNemotronTestRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/nemotron-test'
     | '/onboarding'
     | '/settings'
+    | '/courses/$courseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/nemotron-test'
     | '/onboarding'
     | '/settings'
+    | '/courses/$courseId'
   id:
     | '__root__'
     | '/'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nemotron-test'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
+    | '/_authenticated/courses/$courseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -339,14 +352,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/courses/$courseId': {
+      id: '/_authenticated/courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/courses/$courseId'
+      preLoaderRoute: typeof AuthenticatedCoursesCourseIdRouteImport
+      parentRoute: typeof AuthenticatedCoursesRoute
+    }
   }
 }
+
+interface AuthenticatedCoursesRouteChildren {
+  AuthenticatedCoursesCourseIdRoute: typeof AuthenticatedCoursesCourseIdRoute
+}
+
+const AuthenticatedCoursesRouteChildren: AuthenticatedCoursesRouteChildren = {
+  AuthenticatedCoursesCourseIdRoute: AuthenticatedCoursesCourseIdRoute,
+}
+
+const AuthenticatedCoursesRouteWithChildren =
+  AuthenticatedCoursesRoute._addFileChildren(AuthenticatedCoursesRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssignmentsRoute: typeof AuthenticatedAssignmentsRoute
   AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
-  AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
+  AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinancesRoute: typeof AuthenticatedFinancesRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
@@ -361,7 +392,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssignmentsRoute: AuthenticatedAssignmentsRoute,
   AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
-  AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
+  AuthenticatedCoursesRoute: AuthenticatedCoursesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancesRoute: AuthenticatedFinancesRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,

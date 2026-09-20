@@ -130,13 +130,44 @@ function CoursesPage() {
                         Edit
                       </Button>
                     </div>
-                    <h2 className="font-display text-lg font-semibold">{course.name}</h2>
-                    <p className="mt-1 text-sm text-foreground/55">
-                      {course.course_code ?? "No course code"}
-                    </p>
-                    {course.instructor ? (
-                      <p className="mt-2 text-sm text-foreground/60">{course.instructor}</p>
-                    ) : null}
+                    {/* The whole card body opens the class overview. */}
+                    <Link
+                      to="/courses/$courseId"
+                      params={{ courseId: course.id }}
+                      aria-label={`Open ${course.name}`}
+                      className={cn(
+                        "group block rounded-xl outline-none transition-colors",
+                        "focus-visible:ring-2 focus-visible:ring-offset-2",
+                        palette.ring,
+                      )}
+                    >
+                      <h2 className="flex items-center gap-1.5 font-display text-lg font-semibold">
+                        <span className="truncate">{course.name}</span>
+                        <span
+                          className={cn(
+                            "shrink-0 translate-x-0 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100",
+                            palette.text,
+                          )}
+                          aria-hidden
+                        >
+                          →
+                        </span>
+                      </h2>
+                      <p className="mt-1 text-sm text-foreground/55">
+                        {course.course_code ?? "No course code"}
+                      </p>
+                      {course.instructor ? (
+                        <p className="mt-2 text-sm text-foreground/60">{course.instructor}</p>
+                      ) : null}
+                      <p
+                        className={cn(
+                          "mt-3 text-xs font-medium opacity-70 transition-opacity group-hover:opacity-100",
+                          palette.text,
+                        )}
+                      >
+                        View course overview
+                      </p>
+                    </Link>
                   </>
                 )}
               </Panel>
