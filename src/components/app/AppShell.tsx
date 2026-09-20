@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/app-button";
 import { supabase } from "@/integrations/supabase/client";
 
+import { AnimatedBackground } from "./AnimatedBackground";
 import { SidebarNav } from "./SidebarNav";
 
 function initials(name: string) {
@@ -26,8 +27,9 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
   }
 
   return (
-    <div className="min-h-screen bg-background font-body text-foreground">
-      <header className="sticky top-0 z-20 bg-background/85 ring-1 ring-black/5 backdrop-blur">
+    <div className="relative min-h-screen font-body text-foreground">
+      <AnimatedBackground />
+      <header className="sticky top-0 z-20 bg-background/70 ring-1 ring-black/5 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-5 sm:px-8">
           <Button
             variant="soft"
@@ -71,7 +73,7 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
           </p>
         </aside>
 
-        <main className="min-w-0 flex-1 py-6">{children}</main>
+        <main className="animate-fade-up min-w-0 flex-1 py-6">{children}</main>
       </div>
 
       {mobileOpen ? (

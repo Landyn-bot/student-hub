@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { AnimatedBackground } from "@/components/app/AnimatedBackground";
 import { Button } from "@/components/ui/app-button";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,10 +92,11 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-body text-foreground">
-      <header className="mx-auto flex h-16 w-full max-w-7xl items-center px-5 sm:px-8">
+    <div className="relative flex min-h-screen flex-col font-body text-foreground">
+      <AnimatedBackground />
+      <header className="animate-fade-in mx-auto flex h-16 w-full max-w-7xl items-center px-5 sm:px-8">
         <Link to="/" className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground">
+          <span className="grid size-7 place-items-center rounded-[10px] bg-primary font-display text-xs font-semibold text-primary-foreground transition-transform duration-300 hover:rotate-6 hover:scale-110">
             S
           </span>
           <span className="font-display text-lg font-semibold tracking-tight">Syllo</span>
@@ -102,7 +104,7 @@ function AuthPage() {
       </header>
 
       <main className="flex flex-1 items-center justify-center px-5 pb-16">
-        <div className="panel w-full max-w-md p-6 sm:p-8">
+        <div className="panel animate-fade-up w-full max-w-md p-6 sm:p-8">
           <h1 className="font-display text-2xl font-semibold">
             {mode === "signin" ? "Welcome back." : "Start your semester."}
           </h1>
