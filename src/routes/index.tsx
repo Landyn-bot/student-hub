@@ -26,6 +26,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background font-body text-foreground">
       <header className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-5 sm:px-8">
