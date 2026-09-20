@@ -308,11 +308,13 @@ function DashboardPage() {
           )}
         </Panel>
 
-        <Panel className="min-w-0">
+        <Panel className="min-w-0" delay={160}>
           <PanelHeader
             title="Upcoming"
+            icon={<CalendarClock className="size-4 text-course-blue" />}
             aside={groups.upcoming.length > 0 ? `${groups.upcoming.length} items` : undefined}
           />
+
           {isPending ? (
             <LoadingRows rows={3} />
           ) : isError ? (
