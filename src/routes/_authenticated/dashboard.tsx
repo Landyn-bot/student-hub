@@ -338,8 +338,9 @@ function DashboardPage() {
         </Panel>
       </div>
 
-      <Panel className="mt-5">
-        <PanelHeader title="This week" />
+      <Panel className="mt-5" delay={200}>
+        <PanelHeader title="This week" icon={<CalendarDays className="size-4 text-course-teal" />} />
+
         {isPending ? (
           <LoadingRows rows={2} />
         ) : groups.week.length === 0 ? (
