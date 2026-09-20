@@ -141,12 +141,147 @@
 }
 
 @utility panel {
-  background-color: var(--color-card);
-  border-radius: 16px;
-  box-shadow: 0 0 0 1px oklch(0 0 0 / 5%);
+  position: relative;
+  background-color: color-mix(in oklch, var(--color-card) 82%, transparent);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 5%),
+    0 18px 40px -32px oklch(0.313 0.0175 158 / 55%);
+  backdrop-filter: blur(14px) saturate(1.15);
+  transition:
+    box-shadow 320ms ease,
+    transform 320ms ease;
+}
+
+@utility panel-lift {
+  &:hover {
+    box-shadow:
+      0 0 0 1px oklch(0 0 0 / 7%),
+      0 26px 50px -30px oklch(0.313 0.0175 158 / 60%);
+    transform: translateY(-2px);
+  }
 }
 
 @utility inset-tile {
   border-radius: 12px;
   border: 1px solid color-mix(in oklch, var(--color-border) 70%, transparent);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
 }
+
+/* Row hover: a small lift that hints the row is clickable. */
+@utility tile-lift {
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -18px oklch(0.313 0.0175 158 / 70%);
+  }
+}
+
+/*
+ * Slow drifting colour fields behind the app. Purely decorative: they sit in a
+ * pointer-events-none layer so they never interfere with the planner content.
+ */
+@utility aurora-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@utility aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.5;
+  will-change: transform;
+  animation: aurora-drift 26s ease-in-out infinite;
+}
+
+/* Staggered entrance for stacked panels. */
+@utility rise-in {
+  animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility gradient-ink {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-foreground) 12%,
+    var(--course-leaf-ink) 46%,
+    var(--course-blue-ink) 74%,
+    var(--color-foreground) 96%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: ink-sweep 14s ease-in-out infinite;
+}
+
+@utility soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes aurora-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(6%, -8%, 0) scale(1.12);
+  }
+  66% {
+    transform: translate3d(-7%, 6%, 0) scale(0.94);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ink-sweep {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.82);
+  }
+}
+
+/* Anyone who asks for less movement gets a completely still interface. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob,
+  .rise-in,
+  .gradient-ink,
+  .soft-pulse {
+    animation: none !important;
+  }
+
+  .panel-lift:hover,
+  .tile-lift:hover {
+    transform: none;
+  }
+}
+
