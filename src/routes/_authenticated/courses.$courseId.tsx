@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { CourseForm } from "@/components/app/CourseForm";
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
+import { ManualItemForm } from "@/components/app/ManualItemForm";
 import { PageHeader } from "@/components/app/PageHeader";
 import { formatDay, PlannerItemDetails } from "@/components/app/PlannerItemDetails";
 import { ErrorNote, LoadingRows } from "@/components/app/StatusNote";
@@ -15,7 +16,11 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { coursePalette } from "@/lib/course-colors";
 import { listCourses } from "@/lib/courses.functions";
 import { isOverdue, sortByPriority, todayKey } from "@/lib/item-priority";
-import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
+import {
+  getPlannerData,
+  type PlannerCourse,
+  type PlannerItem,
+} from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/courses/$courseId")({
