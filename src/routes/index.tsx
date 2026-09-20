@@ -51,11 +51,26 @@ function Landing() {
           instead of five tabs. Nothing is invented for you: it fills as you bring your own semester
           in.
         </p>
-        <div className="mt-7">
+        <div className="mt-7 flex flex-wrap items-center gap-3">
           <Button variant="accent" size="lg" asChild>
             <Link to="/auth">Create your account</Link>
           </Button>
+          <Button
+            variant="soft"
+            size="lg"
+            onClick={() => {
+              // No account needed: the planner saves into this browser.
+              setGuestMode(true);
+              void navigate({ to: "/dashboard" });
+            }}
+          >
+            Try it without an account
+          </Button>
         </div>
+        <p className="mt-3 text-xs text-foreground/45">
+          Without an account your work is saved in this browser only. Importing course files needs
+          an account.
+        </p>
 
         <section className="panel mt-12 p-5 sm:p-6">
           <div className="grid gap-3 sm:grid-cols-3">

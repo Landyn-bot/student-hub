@@ -43,10 +43,17 @@ function AuthPage() {
     // Send returning students directly to their workspace.
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
+        setGuestMode(false);
         navigate({ to: "/dashboard", replace: true });
       }
     });
   }, [navigate]);
+
+  /** Start using the planner straight away, saved in this browser only. */
+  function continueAsGuest() {
+    setGuestMode(true);
+    navigate({ to: "/dashboard", replace: true });
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
