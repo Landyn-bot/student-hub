@@ -366,6 +366,7 @@ function newPastedEntry(text: string): CourseImport {
     examsSaved: 0,
     needsAttention: 0,
     error: null,
+    confirmedName: null,
   };
 }
 
