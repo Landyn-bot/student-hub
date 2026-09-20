@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { CalendarClock, CalendarDays, GraduationCap, Sparkles, Sun } from "lucide-react";
 import { useMemo, useState } from "react";
 
-
 import { ItemCheckbox } from "@/components/app/ItemCheckbox";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote, LoadingRows, LoadingTiles } from "@/components/app/StatusNote";
@@ -341,7 +340,10 @@ function DashboardPage() {
       </div>
 
       <Panel className="mt-5" delay={200}>
-        <PanelHeader title="This week" icon={<CalendarDays className="size-4 text-course-teal" />} />
+        <PanelHeader
+          title="This week"
+          icon={<CalendarDays className="size-4 text-course-teal" />}
+        />
 
         {isPending ? (
           <LoadingRows rows={2} />
@@ -394,7 +396,6 @@ function DashboardPage() {
                     "inset-tile tile-lift rise-in overflow-hidden border-l-4 p-4",
                     palette.border,
                     palette.soft,
-
                   )}
                   style={{ animationDelay: `${index * 55}ms` }}
                 >

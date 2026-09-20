@@ -96,7 +96,6 @@ export function AppShell({ children, displayName }: { children: ReactNode; displ
         <main className="min-w-0 flex-1 py-6">{children}</main>
       </div>
 
-
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />

@@ -31,7 +31,10 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   key={item.to}
                   to={item.to}
                   onClick={onNavigate}
-                  className={cn(base, "text-foreground/70 hover:translate-x-1 hover:bg-black/[0.04]")}
+                  className={cn(
+                    base,
+                    "text-foreground/70 hover:translate-x-1 hover:bg-black/[0.04]",
+                  )}
                   activeProps={{
                     className: cn(
                       base,
