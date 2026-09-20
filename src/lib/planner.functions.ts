@@ -26,6 +26,8 @@ export type PlannerItem = {
    * sat on a fixed day rather than completed early, so they are never checkable.
    */
   completable: boolean;
+  /** True once the student has checked the work off. Only assignments can be done. */
+  done: boolean;
 };
 
 /** Quizzes, tests and exams are scheduled sittings, not to-dos. */
@@ -92,11 +94,10 @@ export const getPlannerData = createServerFn({ method: "GET" })
         supabase
           .from("assignments")
           .select(
-            "id, title, description, due_date, due_time, course_id, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
+            "id, title, description, due_date, due_time, course_id, status, source_text, ai_generated, courses(name), course_documents:source_document_id(filename)",
           )
           .eq("user_id", userId)
-          .eq("review_status", "approved")
-          .neq("status", "done"),
+          .eq("review_status", "approved"),
         supabase
           .from("exams")
           .select(
