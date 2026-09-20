@@ -110,9 +110,16 @@ function DashboardPage() {
       .filter((item): item is PlannerItem & { date: string } => Boolean(item.date) && !item.done)
       .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""));
 
-    const dueToday = dated.filter((item) => item.date === today);
-    const upcoming = dated.filter((item) => item.date > today);
-    const thisWeek = upcoming.filter((item) => item.date <= weekEnd);
+    const dueToday = sortByPriority(
+      dated.filter((item) => item.date === today),
+      today,
+    );
+    // Shared scoring decides what surfaces first; date order still groups the week below.
+    const upcoming = sortByPriority(
+      dated.filter((item) => item.date > today),
+      today,
+    );
+    const thisWeek = dated.filter((item) => item.date > today && item.date <= weekEnd);
 
     const byDate = new Map<string, PlannerItem[]>();
     for (const item of thisWeek) {
@@ -390,12 +397,16 @@ function DashboardPage() {
             {courses.map((course, index) => {
               const palette = coursePalette(course.id);
               return (
-                <div
+                <Link
                   key={course.id}
+                  to="/courses/$courseId"
+                  params={{ courseId: course.id }}
+                  aria-label={`Open ${course.name}`}
                   className={cn(
-                    "inset-tile tile-lift rise-in overflow-hidden border-l-4 p-4",
+                    "inset-tile tile-lift rise-in group block overflow-hidden border-l-4 p-4 outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                     palette.border,
                     palette.soft,
+                    palette.ring,
                   )}
                   style={{ animationDelay: `${index * 55}ms` }}
                 >
@@ -404,8 +415,17 @@ function DashboardPage() {
                     aria-hidden
                   />
 
-                  <p className="font-display text-base font-semibold text-foreground">
-                    {course.name}
+                  <p className="flex items-center gap-1.5 font-display text-base font-semibold text-foreground">
+                    <span className="truncate">{course.name}</span>
+                    <span
+                      className={cn(
+                        "shrink-0 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100",
+                        palette.text,
+                      )}
+                      aria-hidden
+                    >
+                      →
+                    </span>
                   </p>
                   <p className="mt-1 text-xs text-foreground/55">
                     {course.courseCode ?? course.instructor ?? "Imported course"}
@@ -414,7 +434,7 @@ function DashboardPage() {
                     {groups.perCourse.get(course.id) ?? 0} upcoming item
                     {(groups.perCourse.get(course.id) ?? 0) === 1 ? "" : "s"}
                   </p>
-                </div>
+                </Link>
               );
             })}
           </div>
