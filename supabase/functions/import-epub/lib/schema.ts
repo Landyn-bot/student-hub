@@ -264,11 +264,24 @@ function normaliseRecord(
   const type = typeof r["type"] === "string" ? r["type"].trim().toLowerCase() : "";
   if (!(RECORD_KINDS as readonly string[]).includes(type))
     return { dropped: "unknown record type" };
-  const kind = type as RecordKind;
+  let kind = type as RecordKind;
 
   const reasons: string[] = [];
   const quote = str(r["source_quote"], MAX_QUOTE) ?? "";
   const quoteFound = quote !== "" && looseIncludes(ctx.chunk.text, quote);
+
+  // A "class meeting" whose own quote names a calendar date is a one-off session out of a
+  // schedule table ("9/17 | Thursday | Synthesis Exercise"), not a weekly pattern. Left as a
+  // meeting its date would be dropped, because meetings carry only weekdays, so it becomes a
+  // dated item instead.
+  let oneOffDate: string | null = null;
+  if (kind === "class_meeting") {
+    const quoted = parseDate(quote, ctx.referenceYear);
+    if (quoted.date !== null) {
+      kind = "deadline";
+      oneOffDate = quoted.date;
+    }
+  }
 
   let confidence = coerceConfidence(r["confidence"]);
   if (confidence === null) {
@@ -310,11 +323,18 @@ function normaliseRecord(
 
   if (kind === "deadline") {
     subtype = pickEnum(r["subtype"], DEADLINE_SUBTYPES, "other");
-    date = readDate(r["date"] ?? r["due_date"]);
-    startTime = parseTime(typeof r["time"] === "string" ? r["time"] : null);
+    date = oneOffDate ?? readDate(r["date"] ?? r["due_date"]);
+    startTime = parseTime(
+      typeof r["time"] === "string"
+        ? r["time"]
+        : typeof r["start_time"] === "string"
+          ? r["start_time"]
+          : null,
+    );
     points = clamp(num(r["points"]), 0, 100_000);
     weight = clamp(num(r["weight_percent"] ?? r["weight"]), 0, 100);
-    location = null;
+    // A reclassified session keeps where it happens; an ordinary deadline has no location.
+    if (oneOffDate === null) location = null;
     if (date === null && !reasons.includes("Date could not be read"))
       reasons.push("No date stated");
   } else if (kind === "exam") {

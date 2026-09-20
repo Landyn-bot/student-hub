@@ -164,7 +164,13 @@ export function extractBlocks(html: string): ExtractedPage {
 
   for (const child of body.children) walk(child, 0, null);
   flush();
-  return { blocks, heading: heading || null };
+
+  const cleaned: IrBlock[] = [];
+  for (const block of blocks) {
+    const text = block.type === "code" ? block.text : stripCanvasNoise(block.text);
+    if (text) cleaned.push({ ...block, text });
+  }
+  return { blocks: cleaned, heading: stripCanvasNoise(heading) || null };
 }
 
 /** Plain text (pasted or from a text file) -> blocks. Markdown-style `#` headings are honoured. */
@@ -207,6 +213,20 @@ export function blocksFromText(text: string): IrBlock[] {
     flush();
   }
   return blocks;
+}
+
+/**
+ * Canvas replaces every attached file with a sentence saying it could not be included. Left in,
+ * it buries the real title of an item and gets quoted back as if it were course content.
+ */
+const CANVAS_FILE_NOTICE =
+  /\s*\[?\s*File\s+\S[^|\n]*?could not be included in the ePub document\.\s*Please see separate zip file for access\.?\s*\]?/gi;
+
+export function stripCanvasNoise(text: string): string {
+  return text
+    .replace(CANVAS_FILE_NOTICE, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
 }
 
 export function renderBlock(block: IrBlock): string {
