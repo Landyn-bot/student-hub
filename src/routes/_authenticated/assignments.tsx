@@ -190,7 +190,14 @@ function AssignmentsPage() {
                       </span>
                     </span>
                     <span className="shrink-0 py-3 pr-3 text-right text-xs text-foreground/60">
-                      {item.date ? formatDay(item.date) : "No date"}
+                      {!item.done && item.date && item.date < todayKey() ? (
+                        <span className="mb-1 inline-block rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                          Overdue
+                        </span>
+                      ) : null}
+                      <span className="block">
+                        {item.date ? formatDay(item.date) : "No date"}
+                      </span>
                       {item.time ? <span className="block">{item.time}</span> : null}
                     </span>
                   </button>
