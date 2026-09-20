@@ -48,6 +48,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
+/** "10:00" -> "10:00 AM" in the student's locale. */
+function clockLabel(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 /** Local calendar day as YYYY-MM-DD, so "today" matches the student's own day. */
 function todayKey(): string {
   const now = new Date();
@@ -117,7 +126,14 @@ function DashboardPage() {
       perCourse.set(item.courseId, (perCourse.get(item.courseId) ?? 0) + 1);
     }
 
-    return { dueToday, upcoming, week: [...byDate.entries()], perCourse };
+    // Recurring class times that fall on today's weekday (Monday = 1 ... Sunday = 7).
+    const jsDay = new Date().getDay();
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    const classesToday = (planner?.classMeetings ?? [])
+      .filter((meeting) => meeting.weekday === isoDay)
+      .sort((a, b) => (a.startTime ?? "").localeCompare(b.startTime ?? ""));
+
+    return { dueToday, upcoming, week: [...byDate.entries()], perCourse, classesToday };
   }, [planner]);
 
   const courses = planner?.courses ?? [];
@@ -215,6 +231,28 @@ function DashboardPage() {
             title="Today"
             aside={groups.dueToday.length > 0 ? `${groups.dueToday.length} due` : undefined}
           />
+          {groups.classesToday.length > 0 ? (
+            <div className="mb-4">
+              <p className="mb-2 text-xs uppercase tracking-wide text-foreground/45">
+                Classes today
+              </p>
+              <ul className="space-y-1.5">
+                {groups.classesToday.map((meeting) => (
+                  <li key={meeting.id} className="text-sm text-foreground/70">
+                    <span className="font-medium text-foreground">
+                      {meeting.courseName ?? meeting.title}
+                    </span>
+                    {meeting.startTime
+                      ? ` · ${clockLabel(meeting.startTime)}${
+                          meeting.endTime ? `–${clockLabel(meeting.endTime)}` : ""
+                        }`
+                      : ""}
+                    {meeting.location ? ` · ${meeting.location}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {isPending ? (
             <LoadingRows rows={2} />
           ) : isError ? (

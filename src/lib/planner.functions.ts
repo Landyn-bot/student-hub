@@ -44,9 +44,23 @@ export type PlannerCourse = {
   instructor: string | null;
 };
 
+/** One recurring weekly class time, from a confirmed import. */
+export type PlannerClassMeeting = {
+  id: string;
+  courseId: string | null;
+  courseName: string | null;
+  title: string;
+  /** ISO weekday: Monday = 1 ... Sunday = 7. */
+  weekday: number;
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+};
+
 export type PlannerData = {
   courses: PlannerCourse[];
   items: PlannerItem[];
+  classMeetings: PlannerClassMeeting[];
   attentionCount: number;
 };
 
@@ -86,7 +100,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         .eq("user_id", userId)
         .eq("review_status", "needs_attention");
 
-    const [courses, assignments, exams, events, attentionA, attentionE, attentionC] =
+    const [courses, assignments, exams, events, meetings, attentionA, attentionE, attentionC] =
       await Promise.all([
         supabase
           .from("courses")
@@ -114,6 +128,12 @@ export const getPlannerData = createServerFn({ method: "GET" })
           )
           .eq("user_id", userId)
           .eq("review_status", "approved"),
+        supabase
+          .from("class_meetings")
+          .select("id, title, weekday, start_time, end_time, location, course_id, courses(name)")
+          .eq("user_id", userId)
+          .eq("review_status", "approved")
+          .order("start_time", { ascending: true }),
         attentionCountFor("assignments"),
         attentionCountFor("exams"),
         attentionCountFor("calendar_events"),
@@ -200,6 +220,16 @@ export const getPlannerData = createServerFn({ method: "GET" })
         instructor: row.instructor,
       })),
       items,
+      classMeetings: (meetings.data ?? []).map((row) => ({
+        id: row.id,
+        courseId: row.course_id,
+        courseName: row.courses?.name ?? null,
+        title: row.title,
+        weekday: row.weekday,
+        startTime: shortTime(row.start_time),
+        endTime: shortTime(row.end_time),
+        location: row.location,
+      })),
       attentionCount: (attentionA.count ?? 0) + (attentionE.count ?? 0) + (attentionC.count ?? 0),
     };
   });

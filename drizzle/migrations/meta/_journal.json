@@ -64,6 +64,13 @@
       "when": 1789860526041,
       "tag": "0008_revoke_anon_access",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789864126041,
+      "tag": "0009_import_staging_and_class_meetings",
+      "breakpoints": true
     }
   ]
 }

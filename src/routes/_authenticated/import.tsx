@@ -1,7 +1,8 @@
-// Import Semester: the production-facing workflow for bringing a semester of Canvas course
-// exports into Syllo. Each .epub is uploaded, parsed, analysed, organized and saved end to
-// end, without asking the student to approve every extracted item. Only genuinely unresolved
-// items (unreadable dates, low confidence) are surfaced afterwards.
+// Import Semester: the front door of the ingestion pipeline.
+//
+// A Canvas course export (.epub) is uploaded to the import-epub edge function, which validates,
+// parses and reads it on the server. Nothing is saved to the planner from this page: the
+// extracted records are staged and the student confirms them on the review screen first.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,43 +15,26 @@ import {
   Settings,
   UserRound,
 } from "lucide-react";
-import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
-import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
-import type { ChunkTrace, CourseExtraction } from "@/lib/course-content";
-import { recordImportRun } from "@/lib/import-store";
 import { readDocumentText } from "@/lib/document-intake.functions";
+import { resumeImport, uploadEpub, uploadText, type StartImportResult } from "@/lib/import-client";
 import {
-  CourseImportError,
-  createImportId,
-  importErrorMessages,
-  normalizeEpubImport,
-  normalizeTextImport,
-  toAnalysisPayload,
-  toImportErrorCode,
-  type ImportErrorCode,
-  type NormalizedCourseImport,
-} from "@/lib/course-import";
+  continueManually,
+  getImportBatch,
+  listOpenImportBatches,
+  type ImportBatchSummary,
+} from "@/lib/import-review.functions";
 import {
   bulkApproveItems,
   listAttentionItems,
   reviewImportedItem,
-  saveCourseImport,
   type AttentionItem,
 } from "@/lib/semester-import.functions";
-import { chunkEpub, EpubParseError, parseEpub } from "@/lib/epub";
 
 export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
@@ -59,13 +43,13 @@ export const Route = createFileRoute("/_authenticated/import")({
       {
         name: "description",
         content:
-          "Drop in a semester of Canvas course exports and Syllo reads, organizes and saves your coursework automatically.",
+          "Drop in a Canvas course export and Syllo reads it, then lets you review everything before it reaches your planner.",
       },
       { property: "og:title", content: "Import Semester — Syllo" },
       {
         property: "og:description",
         content:
-          "Drop in a semester of Canvas course exports and Syllo reads, organizes and saves your coursework automatically.",
+          "Drop in a Canvas course export and Syllo reads it, then lets you review everything before it reaches your planner.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -78,12 +62,12 @@ export const Route = createFileRoute("/_authenticated/import")({
 /* State                                                               */
 /* ------------------------------------------------------------------ */
 
-/** Each stage is distinct: a file is only "complete" once its coursework is saved. */
-type ImportStatus = "uploading" | "parsing" | "analyzing" | "organizing" | "complete" | "failed";
+/** A file is only "ready" once the server has finished reading it and staged the records. */
+type ImportStatus = "uploading" | "reading" | "review" | "failed";
 
-type ImportFailure = { code: ImportErrorCode; message: string };
+type ImportFailure = { code: string; message: string };
 
-/** Where the text comes from. Everything downstream is identical once it is text. */
+/** Where the text comes from. Only EPUBs are read on the server end to end. */
 type SourceKind = "epub" | "document" | "text";
 
 type CourseImport = {
@@ -95,64 +79,39 @@ type CourseImport = {
   fileName: string;
   fileSize: number;
   status: ImportStatus;
-  normalized: NormalizedCourseImport | null;
-  extraction: CourseExtraction | null;
-  courseName: string | null;
-  itemsSaved: number;
-  examsSaved: number;
-  needsAttention: number;
+  batchId: string | null;
+  batch: ImportBatchSummary | null;
   error: ImportFailure | null;
-  /** The official course name the student confirmed; sent with the save so it wins. */
-  confirmedName: string | null;
-};
-
-/** A course-name question waiting on the student; resolved when they confirm. */
-type NameRequest = {
-  importId: string;
-  guess: string;
-  resolve: (name: string) => void;
 };
 
 const statusLabel: Record<ImportStatus, string> = {
   uploading: "Uploading",
-  parsing: "Parsing",
-  analyzing: "Analyzing",
-  organizing: "Organizing",
-  complete: "Complete",
+  reading: "Reading",
+  review: "Ready to review",
   failed: "Failed",
 };
 
 const statusTone: Record<ImportStatus, string> = {
   uploading: "border-border text-foreground/60",
-  parsing: "border-border text-foreground/60",
-  analyzing: "border-border text-foreground/70",
-  organizing: "border-border text-foreground/70",
-  complete: "border-brand/40 bg-brand/5 text-foreground",
+  reading: "border-border text-foreground/70",
+  review: "border-brand/40 bg-brand/5 text-foreground",
   failed: "border-destructive/40 bg-destructive/5 text-destructive",
 };
 
-const MAX_CHARS_PER_CHUNK = 12000;
-/** How many files run through analysis at the same time. */
-const ANALYSIS_CONCURRENCY = 2;
-/** Upper bound on the stored copy of the document text. */
-const MAX_DOCUMENT_CHARS = 400_000;
+const POLL_MS = 2_000;
+const MAX_WAIT_MS = 15 * 60_000;
+/** Upper bound on pasted or file text sent for reading. */
+const MAX_TEXT_CHARS = 1_400_000;
 /** Largest single PDF or image we send off to be read. */
 const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
+const MAX_EPUB_BYTES = 30 * 1024 * 1024;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/** Turn anything thrown during parsing/normalizing into a predictable category. */
-function toFailure(error: unknown): ImportFailure {
-  if (error instanceof CourseImportError) return { code: error.code, message: error.message };
-  if (error instanceof EpubParseError) return { code: "invalid_epub", message: error.message };
-  return {
-    code: "parser_failure",
-    message: error instanceof Error ? error.message : importErrorMessages.parser_failure,
-  };
 }
 
 /** Decides how a chosen file will be turned into text. */
@@ -165,93 +124,40 @@ function kindForFile(file: File): SourceKind | null {
   return null;
 }
 
-function newEntry(file: File, kind: SourceKind): CourseImport {
+function newId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function blankEntry(
+  overrides: Partial<CourseImport> & Pick<CourseImport, "kind" | "fileName" | "fileSize">,
+): CourseImport {
   return {
-    importId: createImportId(),
-    kind,
-    file,
+    importId: newId(),
+    file: null,
     pastedText: null,
-    fileName: file.name,
-    fileSize: file.size,
     status: "uploading",
-    normalized: null,
-    extraction: null,
-    courseName: null,
-    itemsSaved: 0,
-    examsSaved: 0,
-    needsAttention: 0,
+    batchId: null,
+    batch: null,
     error: null,
-    confirmedName: null,
+    ...overrides,
   };
 }
 
-/**
- * Best guess at the course's real name. Canvas EPUB metadata titles are messy
- * ("PHYS_0475_1060_2267_SEC..."), so prefer what the model read out of the
- * content, then the file name without its extension, never the raw metadata title.
- */
-function guessCourseName(extraction: CourseExtraction | null, fileName: string): string {
-  const fromModel = extraction?.course.course_name?.trim();
-  if (fromModel) return fromModel;
-  const base = fileName
-    .replace(/\.[^.]+$/, "")
-    .replace(/[_-]+/g, " ")
-    .trim();
-  return base || fileName;
+function newEntry(file: File, kind: SourceKind): CourseImport {
+  return blankEntry({ kind, file, fileName: file.name, fileSize: file.size });
 }
 
-/** Asks the student to confirm the course name before anything is saved. */
-function NameCourseDialog({
-  request,
-  onConfirm,
-}: {
-  request: NameRequest | null;
-  onConfirm: (request: NameRequest, name: string) => void;
-}) {
-  const [name, setName] = useState("");
-  // Reset the field each time a new file asks.
-  const importId = request?.importId ?? null;
-  const guess = request?.guess ?? "";
-  const [lastId, setLastId] = useState<string | null>(null);
-  if (importId !== lastId) {
-    setLastId(importId);
-    setName(guess);
-  }
-
-  return (
-    <Dialog open={request !== null} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Name this course</DialogTitle>
-          <DialogDescription>
-            This is the name that will show on your dashboard, calendar and assignments. Canvas
-            export titles are messy, so pick the clean one — e.g. “Intro to Psychology”.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          className="mt-2 space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!request) return;
-            const trimmed = name.trim();
-            if (trimmed.length === 0) return;
-            onConfirm(request, trimmed);
-          }}
-        >
-          <Input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="e.g. Intro to Psychology"
-            maxLength={200}
-            autoFocus
-          />
-          <Button type="submit" className="w-full" disabled={name.trim().length === 0}>
-            Save name and continue
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+/** An entry for text the student pasted in rather than uploaded. */
+function newPastedEntry(text: string): CourseImport {
+  const stamp = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return blankEntry({
+    kind: "text",
+    pastedText: text,
+    fileName: `Pasted text (${stamp})`,
+    fileSize: text.length,
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -351,28 +257,6 @@ function CanvasTutorial() {
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-/** An entry for text the student pasted in rather than uploaded. */
-function newPastedEntry(text: string): CourseImport {
-  const stamp = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  return {
-    importId: createImportId(),
-    kind: "text",
-    file: null,
-    pastedText: text,
-    fileName: `Pasted text (${stamp})`,
-    fileSize: text.length,
-    status: "uploading",
-    normalized: null,
-    extraction: null,
-    courseName: null,
-    itemsSaved: 0,
-    examsSaved: 0,
-    needsAttention: 0,
-    error: null,
-    confirmedName: null,
-  };
-}
-
 /** Reads a file into a data URL so it can be posted to Syllo's own reading endpoint. */
 function toDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -384,25 +268,20 @@ function toDataUrl(file: File): Promise<string> {
 }
 
 function ImportSemesterPage() {
-  const analyze = useServerFn(analyzeCourseContentStructured);
   const readDocument = useServerFn(readDocumentText);
-  const save = useServerFn(saveCourseImport);
+  const fetchBatch = useServerFn(getImportBatch);
   const queryClient = useQueryClient();
 
   const [imports, setImports] = useState<CourseImport[]>([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Course-name prompts queue up so concurrent imports ask one at a time.
-  const [nameQueue, setNameQueue] = useState<NameRequest[]>([]);
-
-  /** Pause a file's pipeline until the student confirms its course name. */
-  const askCourseName = useCallback(
-    (importId: string, guess: string) =>
-      new Promise<string>((resolve) => {
-        setNameQueue((queue) => [...queue, { importId, guess, resolve }]);
-      }),
-    [],
-  );
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const patch = useCallback((importId: string, next: Partial<CourseImport>) => {
     setImports((prev) =>
@@ -410,38 +289,93 @@ function ImportSemesterPage() {
     );
   }, []);
 
-  const confirmCourseName = useCallback(
-    (request: NameRequest, name: string) => {
-      patch(request.importId, { confirmedName: name });
-      request.resolve(name);
-      setNameQueue((queue) => queue.filter((item) => item.importId !== request.importId));
-    },
+  const fail = useCallback(
+    (importId: string, error: ImportFailure) => patch(importId, { status: "failed", error }),
     [patch],
   );
 
-  /** Parse in the browser, analyse on our own endpoint, then organize and save. */
+  /** Follow a batch while the server reads it, until it can be reviewed or has failed. */
+  const follow = useCallback(
+    async (importId: string, batchId: string) => {
+      patch(importId, { status: "reading", batchId, error: null });
+      const startedAt = Date.now();
+
+      while (mounted.current && Date.now() - startedAt < MAX_WAIT_MS) {
+        let detail: Awaited<ReturnType<typeof fetchBatch>>;
+        try {
+          detail = await fetchBatch({ data: { batchId } });
+        } catch {
+          // A dropped request is not a failed import; keep asking.
+          await sleep(POLL_MS * 2);
+          continue;
+        }
+        if (!detail) {
+          fail(importId, { code: "not_found", message: "That import could not be found." });
+          return;
+        }
+        patch(importId, { batch: detail.batch });
+        const { status } = detail.batch;
+
+        if (status === "ready" || status === "partial") {
+          patch(importId, { status: "review" });
+          void queryClient.invalidateQueries({ queryKey: ["import-batches-open"] });
+          return;
+        }
+        if (status === "failed") {
+          fail(importId, {
+            code: detail.batch.errorCode ?? "internal",
+            message: detail.batch.errorMessage ?? "This file could not be read.",
+          });
+          return;
+        }
+        if (status === "confirmed" || status === "discarded") {
+          fail(importId, { code: "finished", message: "This import is already finished." });
+          return;
+        }
+        if (detail.batch.stalled) {
+          fail(importId, {
+            code: "stalled",
+            message: "Reading stopped before it finished. Try again to pick up where it left off.",
+          });
+          return;
+        }
+        await sleep(POLL_MS);
+      }
+      if (mounted.current) {
+        fail(importId, { code: "timeout", message: "Reading is taking longer than expected." });
+      }
+    },
+    [fail, fetchBatch, patch, queryClient],
+  );
+
+  /** Send the file (or its text) to the server, then follow the batch it creates. */
   const runImport = useCallback(
     async (entry: CourseImport) => {
-      patch(entry.importId, { status: "parsing", error: null });
+      patch(entry.importId, { status: "uploading", error: null });
 
-      let normalized: NormalizedCourseImport;
+      let started: StartImportResult;
       try {
         if (entry.kind === "epub") {
-          const parsed = await parseEpub(await entry.file!.arrayBuffer());
-          const chunks = chunkEpub(parsed, { maxChars: MAX_CHARS_PER_CHUNK });
-          normalized = normalizeEpubImport(entry.fileName, parsed, chunks, entry.importId);
+          if (entry.file!.size > MAX_EPUB_BYTES) {
+            fail(entry.importId, {
+              code: "file_too_large",
+              message: "That file is larger than 30 MB. Try exporting fewer courses at once.",
+            });
+            return;
+          }
+          started = await uploadEpub(entry.file!);
         } else {
-          // PDFs and screenshots are read on the server; text files and pasted text
-          // need no reading step at all. Either way we end up with plain text.
+          // PDFs and screenshots are read to text first; text and pasted text need no reading.
           let text: string;
           if (entry.kind === "text") {
             text = entry.pastedText ?? (await entry.file!.text());
           } else {
             if (entry.file!.size > MAX_DOCUMENT_BYTES) {
-              throw new CourseImportError(
-                "parser_failure",
-                "That file is larger than 15 MB. Try splitting it up.",
-              );
+              fail(entry.importId, {
+                code: "file_too_large",
+                message: "That file is larger than 15 MB. Try splitting it up.",
+              });
+              return;
             }
             const read = await readDocument({
               data: {
@@ -451,121 +385,57 @@ function ImportSemesterPage() {
               },
             });
             if (!read.ok) {
-              throw new CourseImportError(toImportErrorCode(read.kind), read.error);
+              fail(entry.importId, { code: read.kind, message: read.error });
+              return;
             }
             text = read.text;
           }
           if (text.trim().length < 20) {
-            throw new CourseImportError("no_readable_content");
+            fail(entry.importId, {
+              code: "no_readable_content",
+              message: "No readable text was found in this file.",
+            });
+            return;
           }
-          normalized = normalizeTextImport(entry.fileName, text, {
-            importId: entry.importId,
-            maxChars: MAX_CHARS_PER_CHUNK,
-          });
+          started = await uploadText(entry.fileName, text.slice(0, MAX_TEXT_CHARS));
         }
-        patch(entry.importId, { normalized });
       } catch (error) {
-        patch(entry.importId, { status: "failed", error: toFailure(error) });
-        return;
-      }
-
-      patch(entry.importId, { status: "analyzing" });
-      let extraction: CourseExtraction;
-      let trace: ChunkTrace[] = [];
-      try {
-        const result = await analyze({ data: toAnalysisPayload(normalized) });
-        if (!result.ok) {
-          patch(entry.importId, {
-            status: "failed",
-            error: { code: toImportErrorCode(result.kind), message: result.error },
-          });
-          return;
-        }
-        extraction = result.extraction;
-        trace = result.trace;
-        patch(entry.importId, { extraction });
-      } catch (error) {
-        console.error("[import] analysis request failed", error);
-        patch(entry.importId, {
-          status: "failed",
-          error: { code: "unknown", message: importErrorMessages.unknown },
+        fail(entry.importId, {
+          code: "unknown",
+          message: error instanceof Error ? error.message : "The file could not be read.",
         });
         return;
       }
 
-      // Organizing: group the extracted facts under their course and write them to the
-      // student's own semester data. Provenance travels with every row.
-      patch(entry.importId, { status: "organizing" });
-      // Before anything is written, ask the student for the course's official name —
-      // Canvas export titles are messy, so they get the final say.
-      const confirmedName = await askCourseName(
-        entry.importId,
-        guessCourseName(extraction, entry.fileName),
-      );
-      try {
-        const documentText = normalized.chunks
-          .map((chunk) => chunk.text)
-          .join("\n\n")
-          .slice(0, MAX_DOCUMENT_CHARS);
-
-        const saved = await save({
-          data: {
-            importId: entry.importId,
-            sourceName: entry.fileName,
-            documentText,
-            documentTitle: normalized.metadata.title,
-            courseNameOverride: confirmedName,
-            extraction,
-          },
-        });
-
-        if (!saved.ok) {
-          patch(entry.importId, {
-            status: "failed",
-            error: { code: "unknown", message: saved.error },
-          });
-          return;
-        }
-
-        patch(entry.importId, {
-          status: "complete",
-          courseName: saved.courseName,
-          itemsSaved: saved.itemsSaved,
-          examsSaved: saved.examsSaved,
-          needsAttention: saved.needsAttention,
-        });
-        // Keep the pipeline trace for the developer view (session memory only).
-        recordImportRun({
-          importId: entry.importId,
-          sourceName: entry.fileName,
-          courseName: saved.courseName,
-          finishedAt: Date.now(),
-          chapters: normalized.chapters.length,
-          chunks: normalized.chunks.length,
-          trace,
-          extraction,
-          decisions: saved.decisions,
-        });
-        void queryClient.invalidateQueries({ queryKey: ["attention-items"] });
-        void queryClient.invalidateQueries({ queryKey: ["courses"] });
-        void queryClient.invalidateQueries({ queryKey: ["planner"] });
-        void queryClient.invalidateQueries({ queryKey: ["focus"] });
-      } catch (error) {
-        console.error("[import] saving failed", error);
-        patch(entry.importId, {
-          status: "failed",
-          error: { code: "unknown", message: importErrorMessages.unknown },
-        });
+      if (!started.ok) {
+        fail(entry.importId, { code: started.code, message: started.message });
+        return;
       }
+      await follow(entry.importId, started.batchId);
     },
-    [analyze, askCourseName, patch, queryClient, readDocument, save],
+    [fail, follow, patch, readDocument],
+  );
+
+  /** Failed after upload: ask the server to read the missing sections again. */
+  const retry = useCallback(
+    async (entry: CourseImport) => {
+      if (!entry.batchId) return runImport(entry);
+      patch(entry.importId, { status: "reading", error: null });
+      const resumed = await resumeImport(entry.batchId);
+      if (!resumed.ok) {
+        fail(entry.importId, { code: resumed.code, message: resumed.message });
+        return;
+      }
+      await follow(entry.importId, entry.batchId);
+    },
+    [fail, follow, patch, runImport],
   );
 
   /** Run a set of files with bounded concurrency; each one succeeds or fails on its own. */
   const runAll = useCallback(
     async (entries: CourseImport[]) => {
       const queue = [...entries];
-      const workers = Array.from({ length: Math.min(ANALYSIS_CONCURRENCY, queue.length) }, () =>
+      const workers = Array.from({ length: Math.min(2, queue.length) }, () =>
         (async () => {
           for (let next = queue.shift(); next; next = queue.shift()) {
             await runImport(next);
@@ -610,20 +480,20 @@ function ImportSemesterPage() {
 
   const summary = useMemo(() => {
     const by = (status: ImportStatus) => imports.filter((item) => item.status === status).length;
-    const complete = imports.filter((item) => item.status === "complete");
     return {
       total: imports.length,
-      working: by("uploading") + by("parsing"),
-      analyzing: by("analyzing"),
-      organizing: by("organizing"),
-      complete: complete.length,
+      uploading: by("uploading"),
+      reading: by("reading"),
+      review: by("review"),
       failed: by("failed"),
-      items: complete.reduce((sum, item) => sum + item.itemsSaved, 0),
-      exams: complete.reduce((sum, item) => sum + item.examsSaved, 0),
     };
   }, [imports]);
 
-  const working = summary.working + summary.analyzing + summary.organizing > 0;
+  const working = summary.uploading + summary.reading > 0;
+  const inSession = useMemo(
+    () => new Set(imports.map((item) => item.batchId).filter((id): id is string => id !== null)),
+    [imports],
+  );
 
   return (
     <>
@@ -638,12 +508,14 @@ function ImportSemesterPage() {
       />
 
       <div className="grid gap-5">
+        <OpenBatchesPanel skip={inSession} />
+
         <CanvasTutorial />
 
         <Panel>
           <PanelHeader title="Course files" aside="EPUB · PDF · image · text" />
           <ol className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/50">
-            {["Upload", "Processing", "Organized", "Done"].map((step, index) => (
+            {["Upload", "Read", "Review", "Save"].map((step, index) => (
               <li key={step} className="flex items-center gap-2">
                 {index > 0 ? <span aria-hidden>→</span> : null}
                 <span>{step}</span>
@@ -665,8 +537,8 @@ function ImportSemesterPage() {
               Drop your course files here
             </p>
             <p className="mx-auto mt-1 max-w-[46ch] text-pretty text-sm text-foreground/55">
-              Canvas exports, syllabus PDFs, screenshots or photos of a schedule — each one is read,
-              understood and added to your semester automatically.
+              Canvas exports, syllabus PDFs, screenshots or photos of a schedule. Syllo reads each
+              one, then shows you everything it found to check before anything is saved.
             </p>
             <div className="mt-4">
               <Button
@@ -696,14 +568,12 @@ function ImportSemesterPage() {
         <PasteTextPanel onSubmit={(text) => addPastedText(text)} />
 
         {imports.map((item) => (
-          <ImportCard key={item.importId} item={item} onRetry={() => void runImport(item)} />
+          <ImportCard key={item.importId} item={item} onRetry={() => void retry(item)} />
         ))}
 
-        {summary.complete > 0 && !working ? <FinishedSummary summary={summary} /> : null}
+        {summary.review > 0 && !working ? <ReadySummary imports={imports} /> : null}
 
-        <NameCourseDialog request={nameQueue[0] ?? null} onConfirm={confirmCourseName} />
-
-        {summary.complete > 0 ? <AttentionPanel /> : null}
+        <AttentionPanel />
       </div>
     </>
   );
@@ -767,25 +637,21 @@ function PasteTextPanel({ onSubmit }: { onSubmit: (text: string) => void }) {
 
 type Summary = {
   total: number;
-  working: number;
-  analyzing: number;
-  organizing: number;
-  complete: number;
+  uploading: number;
+  reading: number;
+  review: number;
   failed: number;
-  items: number;
-  exams: number;
 };
 
 function ProgressSummary({ summary }: { summary: Summary }) {
-  const done = summary.complete + summary.failed;
+  const done = summary.review + summary.failed;
   const percent = summary.total === 0 ? 0 : Math.round((done / summary.total) * 100);
 
   const lines = [
-    `${summary.total} course${summary.total === 1 ? "" : "s"} selected`,
-    summary.working > 0 ? `${summary.working} reading` : null,
-    summary.analyzing > 0 ? `${summary.analyzing} analyzing` : null,
-    summary.organizing > 0 ? `${summary.organizing} organizing` : null,
-    summary.complete > 0 ? `${summary.complete} complete` : null,
+    `${summary.total} file${summary.total === 1 ? "" : "s"} selected`,
+    summary.uploading > 0 ? `${summary.uploading} uploading` : null,
+    summary.reading > 0 ? `${summary.reading} reading` : null,
+    summary.review > 0 ? `${summary.review} ready to review` : null,
     summary.failed > 0 ? `${summary.failed} failed` : null,
   ].filter((line): line is string => line !== null);
 
@@ -802,45 +668,29 @@ function ProgressSummary({ summary }: { summary: Summary }) {
   );
 }
 
-/** The plain-language result once every file has finished. */
-function FinishedSummary({ summary }: { summary: Summary }) {
-  const { data: attention, isPending } = useQuery({
-    queryKey: ["attention-items"],
-    queryFn: () => listAttentionItems(),
-  });
-
-  const facts = [
-    `${summary.complete} course${summary.complete === 1 ? "" : "s"} imported`,
-    `${summary.items} academic item${summary.items === 1 ? "" : "s"} added to your planner`,
-    `${summary.exams} exam${summary.exams === 1 ? "" : "s"} found`,
-  ];
-
+/** Reading is done: nothing is saved until the student has looked at what was found. */
+function ReadySummary({ imports }: { imports: CourseImport[] }) {
+  const ready = imports.filter((item) => item.status === "review" && item.batchId !== null);
   return (
     <Panel className="border-brand/40">
       <div className="flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
         <div className="min-w-0">
           <h2 className="font-display text-lg font-semibold text-foreground">
-            All done — your semester is in Syllo.
+            Ready for your review.
           </h2>
-          <p className="mt-1 text-sm text-foreground/60">{facts.join(" · ")}</p>
-          {/* Counted only once the list has loaded, so it never briefly reads zero. */}
-          {!isPending && attention && attention.length > 0 ? (
-            <p className="mt-1 text-sm text-foreground/60">
-              {attention.length} item{attention.length === 1 ? "" : "s"} still need a quick look
-              below.
-            </p>
-          ) : null}
-          {summary.failed > 0 ? (
-            <p className="mt-1 text-sm text-foreground/60">
-              {summary.failed} file{summary.failed === 1 ? "" : "s"} could not be read — use “Try
-              this file again” above.
-            </p>
-          ) : null}
-          <div className="mt-4">
-            <Button variant="brand" asChild>
-              <Link to="/dashboard">Go to my dashboard</Link>
-            </Button>
+          <p className="mt-1 text-sm text-foreground/60">
+            Nothing is in your planner yet. Check what Syllo found, fix anything that is off, then
+            confirm.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {ready.map((item) => (
+              <Button key={item.importId} variant="brand" asChild>
+                <Link to="/import-review" search={{ batch: item.batchId! }}>
+                  Review {item.batch?.course.name ?? item.fileName}
+                </Link>
+              </Button>
+            ))}
           </div>
         </div>
       </div>
@@ -848,10 +698,56 @@ function FinishedSummary({ summary }: { summary: Summary }) {
   );
 }
 
+/** Imports from an earlier visit that are still waiting for review. */
+function OpenBatchesPanel({ skip }: { skip: Set<string> }) {
+  const fetchOpen = useServerFn(listOpenImportBatches);
+  const { data } = useQuery({
+    queryKey: ["import-batches-open"],
+    queryFn: () => fetchOpen(),
+  });
+  const batches = (data ?? []).filter((batch) => !skip.has(batch.id));
+  if (batches.length === 0) return null;
+
+  return (
+    <Panel>
+      <PanelHeader title="Pick up where you left off" aside={`${batches.length}`} />
+      <div className="space-y-2">
+        {batches.map((batch) => (
+          <div
+            key={batch.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-3"
+          >
+            <div className="min-w-0">
+              <p className="truncate font-medium text-foreground">
+                {batch.course.name ?? batch.filename}
+              </p>
+              <p className="text-xs text-foreground/50">
+                {batch.status === "processing"
+                  ? batch.stalled
+                    ? "Reading stopped before it finished"
+                    : `Reading · ${batch.chunksDone} of ${batch.chunksTotal} sections`
+                  : batch.status === "partial"
+                    ? "Some sections could not be read"
+                    : "Ready to review"}
+              </p>
+            </div>
+            <Button variant="soft" asChild>
+              <Link to="/import-review" search={{ batch: batch.id }}>
+                {batch.status === "processing" && !batch.stalled ? "Watch progress" : "Review"}
+              </Link>
+            </Button>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
 function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void }) {
-  const busy =
-    item.status === "parsing" || item.status === "analyzing" || item.status === "organizing";
-  const normalized = item.normalized;
+  const busy = item.status === "uploading" || item.status === "reading";
+  const batch = item.batch;
+  const continueFn = useServerFn(continueManually);
+  const [opening, setOpening] = useState(false);
 
   return (
     <Panel>
@@ -868,19 +764,17 @@ function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void
         </span>
       </div>
 
-      {normalized ? (
+      {batch ? (
         <div className="mt-4 space-y-1 text-sm">
-          <p className="font-display text-base text-foreground">
-            {item.courseName ?? normalized.metadata.title ?? "Course title not stated in the file"}
-          </p>
+          {batch.course.name ? (
+            <p className="font-display text-base text-foreground">{batch.course.name}</p>
+          ) : null}
           <p className="text-foreground/60">
-            {normalized.chapters.length} sections · {normalized.chunks.length} passages
-            {item.status === "complete" ? ` · ${item.itemsSaved} items saved` : ""}
-            {item.status === "complete" && item.needsAttention > 0
-              ? ` · ${item.needsAttention} need attention`
-              : ""}
+            {item.status === "reading"
+              ? `Reading section ${Math.min(batch.chunksDone + 1, batch.chunksTotal)} of ${batch.chunksTotal}`
+              : `${batch.chunksDone} of ${batch.chunksTotal} sections read`}
           </p>
-          {normalized.warnings.map((warning) => (
+          {batch.warnings.map((warning) => (
             <p key={warning} className="text-xs text-foreground/50">
               ⚠ {warning}
             </p>
@@ -889,13 +783,30 @@ function ImportCard({ item, onRetry }: { item: CourseImport; onRetry: () => void
       ) : null}
 
       {item.status === "failed" ? (
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
           <ErrorNote
             title="This file could not be imported"
-            description={item.error?.message ?? importErrorMessages.unknown}
+            description={item.error?.message ?? "Something went wrong while processing this file."}
             onRetry={onRetry}
             retrying={busy}
           />
+          {item.batchId && item.error?.code !== "not_found" ? (
+            <Button
+              variant="soft"
+              loading={opening}
+              onClick={async () => {
+                setOpening(true);
+                try {
+                  await continueFn({ data: { batchId: item.batchId! } });
+                } finally {
+                  setOpening(false);
+                }
+                window.location.assign(`/import-review?batch=${item.batchId}`);
+              }}
+            >
+              Enter the items by hand instead
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </Panel>

@@ -60,7 +60,7 @@ export function parseItemDate(
   }
 
   // October 12, 2026 / Oct 12
-  const monthFirst = /([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:\s*,?\s*(\d{4}))?/.exec(text);
+  const monthFirst = /([A-Za-z]{3,9})\.?\s+(\d{1,2})(?!\d)(?:\s*,?\s*(\d{4}))?/.exec(text);
   if (monthFirst) {
     const month = monthIndex(monthFirst[1] ?? "");
     if (month > 0) {
