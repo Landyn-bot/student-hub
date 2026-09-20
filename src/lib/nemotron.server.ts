@@ -48,9 +48,23 @@ export type NemotronResult = {
 
 type NimChatCompletion = {
   model?: string;
-  choices?: Array<{ message?: { content?: unknown } }>;
+  choices?: Array<{ message?: { content?: unknown; reasoning_content?: unknown } }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 };
+
+/**
+ * Removes the model's internal reasoning from a reply. Nemotron models can
+ * wrap their chain-of-thought in <think>…</think> blocks inside the content;
+ * students should only ever see the final answer, never the working. An
+ * unclosed opening tag means the reasoning was cut off mid-block, so
+ * everything from that tag onward is dropped as well.
+ */
+export function stripModelThinking(text: string): string {
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const dangling = cleaned.search(/<think>/i);
+  if (dangling !== -1) cleaned = cleaned.slice(0, dangling);
+  return cleaned.trim();
+}
 
 /** Human-readable failure message for a kind; never contains credentials. */
 function messageFor(kind: NemotronFailureKind, status?: number): string {
