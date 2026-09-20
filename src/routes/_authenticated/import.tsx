@@ -102,6 +102,15 @@ type CourseImport = {
   examsSaved: number;
   needsAttention: number;
   error: ImportFailure | null;
+  /** The official course name the student confirmed; sent with the save so it wins. */
+  confirmedName: string | null;
+};
+
+/** A course-name question waiting on the student; resolved when they confirm. */
+type NameRequest = {
+  importId: string;
+  guess: string;
+  resolve: (name: string) => void;
 };
 
 const statusLabel: Record<ImportStatus, string> = {
@@ -172,7 +181,74 @@ function newEntry(file: File, kind: SourceKind): CourseImport {
     examsSaved: 0,
     needsAttention: 0,
     error: null,
+    confirmedName: null,
   };
+}
+
+/**
+ * Best guess at the course's real name. Canvas EPUB metadata titles are messy
+ * ("PHYS_0475_1060_2267_SEC..."), so prefer what the model read out of the
+ * content, then the file name without its extension, never the raw metadata title.
+ */
+function guessCourseName(extraction: CourseExtraction | null, fileName: string): string {
+  const fromModel = extraction?.course.course_name?.trim();
+  if (fromModel) return fromModel;
+  const base = fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  return base || fileName;
+}
+
+/** Asks the student to confirm the course name before anything is saved. */
+function NameCourseDialog({
+  request,
+  onConfirm,
+}: {
+  request: NameRequest | null;
+  onConfirm: (request: NameRequest, name: string) => void;
+}) {
+  const [name, setName] = useState("");
+  // Reset the field each time a new file asks.
+  const importId = request?.importId ?? null;
+  const guess = request?.guess ?? "";
+  const [lastId, setLastId] = useState<string | null>(null);
+  if (importId !== lastId) {
+    setLastId(importId);
+    setName(guess);
+  }
+
+  return (
+    <Dialog open={request !== null} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Name this course</DialogTitle>
+          <DialogDescription>
+            This is the name that will show on your dashboard, calendar and assignments. Canvas
+            export titles are messy, so pick the clean one — e.g. “Intro to Psychology”.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="mt-2 space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!request) return;
+            const trimmed = name.trim();
+            if (trimmed.length === 0) return;
+            onConfirm(request, trimmed);
+          }}
+        >
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="e.g. Intro to Psychology"
+            maxLength={200}
+            autoFocus
+          />
+          <Button type="submit" className="w-full" disabled={name.trim().length === 0}>
+            Save name and continue
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 /* ------------------------------------------------------------------ */
