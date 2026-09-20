@@ -142,6 +142,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         sourceName: sourceName(row),
         aiGenerated: row.ai_generated,
         completable: !isSitting(inferType(row.title, "assignment")),
+        done: row.status === "done",
       });
     }
 
@@ -161,6 +162,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         sourceName: sourceName(row),
         aiGenerated: row.ai_generated,
         completable: false,
+        done: false,
       });
     }
 
@@ -184,6 +186,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         sourceName: sourceName(row),
         aiGenerated: row.ai_generated,
         completable: false,
+        done: false,
       });
     }
 
