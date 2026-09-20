@@ -35,11 +35,12 @@ export function PanelHeader({
   icon?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <h2 className="flex min-w-0 items-center gap-2 font-display text-lg font-semibold text-foreground">
         {icon ? <span className="shrink-0">{icon}</span> : null}
-        {title}
+        <span className="min-w-0">{title}</span>
       </h2>
+
       {aside ? (
         <span className="shrink-0 rounded-full bg-black/[0.04] px-2.5 py-1 text-xs text-foreground/55">
           {aside}
