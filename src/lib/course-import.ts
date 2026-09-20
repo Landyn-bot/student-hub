@@ -234,3 +234,101 @@ export function toAnalysisPayload(normalized: NormalizedCourseImport): CourseCon
   }
   return payload.data;
 }
+
+/* ------------------------------------------------------------------ */
+/* Plain-text sources (PDF, screenshot, pasted text)                    */
+/* ------------------------------------------------------------------ */
+
+/** Sections are split on blank lines so a chunk rarely cuts a sentence in half. */
+function splitIntoChunks(text: string, maxChars: number): string[] {
+  const paragraphs = text
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const paragraph of paragraphs) {
+    // A single oversized paragraph is cut on length; everything else packs neatly.
+    if (paragraph.length > maxChars) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      for (let at = 0; at < paragraph.length; at += maxChars) {
+        chunks.push(paragraph.slice(at, at + maxChars));
+      }
+      continue;
+    }
+    if (current.length + paragraph.length + 2 > maxChars) {
+      chunks.push(current);
+      current = paragraph;
+    } else {
+      current = current ? `${current}\n\n${paragraph}` : paragraph;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+/**
+ * Plain text (a read PDF, a transcribed screenshot, pasted syllabus text) -> normalized import.
+ * The same contract the EPUB path produces, so analysis, provenance and saving are identical.
+ */
+export function normalizeTextImport(
+  sourceName: string,
+  text: string,
+  options: { importId?: string; title?: string | null; maxChars?: number } = {},
+): NormalizedCourseImport {
+  const importId = options.importId ?? createImportId();
+  const maxChars = options.maxChars ?? 12000;
+  const pieces = splitIntoChunks(text, maxChars);
+
+  if (pieces.length === 0) {
+    throw new CourseImportError("no_readable_content");
+  }
+
+  const chapterTitle = options.title ?? sourceName;
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+  const candidate: NormalizedCourseImport = {
+    importId,
+    sourceName,
+    metadata: {
+      title: options.title ?? null,
+      authors: [],
+      language: null,
+      publisher: null,
+      identifier: null,
+      published: null,
+      description: null,
+    },
+    warnings: [],
+    chapters: [
+      {
+        chapterIndex: 0,
+        chapterId: `${importId}:ch:0`,
+        chapterTitle,
+        sourcePath: sourceName,
+        wordCount,
+      },
+    ],
+    chunks: pieces.map((piece, index) => ({
+      chunkKey: `${importId}:0-${index + 1}`,
+      localChunkId: `0-${index + 1}`,
+      chapterIndex: 0,
+      chapterTitle,
+      sourcePath: sourceName,
+      part: index + 1,
+      totalParts: pieces.length,
+      text: piece,
+    })),
+  };
+
+  const validated = normalizedCourseImportSchema.safeParse(candidate);
+  if (!validated.success) {
+    throw new CourseImportError("invalid_payload", importErrorMessages.invalid_payload);
+  }
+  return validated.data;
+}
