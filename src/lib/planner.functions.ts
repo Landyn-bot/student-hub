@@ -140,6 +140,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         sourceText: row.source_text,
         sourceName: sourceName(row),
         aiGenerated: row.ai_generated,
+        completable: !isSitting(inferType(row.title, "assignment")),
       });
     }
 
@@ -158,6 +159,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         sourceText: row.source_text,
         sourceName: sourceName(row),
         aiGenerated: row.ai_generated,
+        completable: false,
       });
     }
 
@@ -180,6 +182,7 @@ export const getPlannerData = createServerFn({ method: "GET" })
         sourceText: row.source_text,
         sourceName: sourceName(row),
         aiGenerated: row.ai_generated,
+        completable: false,
       });
     }
 
@@ -193,4 +196,39 @@ export const getPlannerData = createServerFn({ method: "GET" })
       items,
       attentionCount: (attentionA.count ?? 0) + (attentionE.count ?? 0) + (attentionC.count ?? 0),
     };
+  });
+
+/**
+ * Checks an assignment off (or puts it back on the list). Scheduled sittings such as
+ * quizzes and exams are rejected, since they are not work a student hands in.
+ */
+export const setAssignmentDone = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; done: boolean }) => input)
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase, userId } = context;
+
+    const existing = await supabase
+      .from("assignments")
+      .select("id, title")
+      .eq("user_id", userId)
+      .eq("id", data.id)
+      .maybeSingle();
+
+    if (!existing.data) throw new Error("That item could not be found.");
+    if (isSitting(inferType(existing.data.title, "assignment"))) {
+      throw new Error("Quizzes and exams cannot be checked off.");
+    }
+
+    const update = await supabase
+      .from("assignments")
+      .update({
+        status: data.done ? "done" : "todo",
+        completed_at: data.done ? new Date().toISOString() : null,
+      })
+      .eq("user_id", userId)
+      .eq("id", data.id);
+
+    if (update.error) throw new Error("We could not update that item.");
+    return { ok: true };
   });
