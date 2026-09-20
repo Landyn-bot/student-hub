@@ -401,6 +401,12 @@ function ImportSemesterPage() {
     [],
   );
 
+  const patch = useCallback((importId: string, next: Partial<CourseImport>) => {
+    setImports((prev) =>
+      prev.map((item) => (item.importId === importId ? { ...item, ...next } : item)),
+    );
+  }, []);
+
   const confirmCourseName = useCallback(
     (request: NameRequest, name: string) => {
       patch(request.importId, { confirmedName: name });
@@ -409,12 +415,6 @@ function ImportSemesterPage() {
     },
     [patch],
   );
-
-  const patch = useCallback((importId: string, next: Partial<CourseImport>) => {
-    setImports((prev) =>
-      prev.map((item) => (item.importId === importId ? { ...item, ...next } : item)),
-    );
-  }, []);
 
   /** Parse in the browser, analyse on our own endpoint, then organize and save. */
   const runImport = useCallback(
