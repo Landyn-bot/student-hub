@@ -151,11 +151,36 @@ function DashboardPage() {
         }
       />
 
+      {/* Live counts, drawn only from the student's own stored data. */}
+      <div className="rise-in mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Due today", value: groups.dueToday.length, tint: "from-course-coral/20" },
+          { label: "This week", value: groups.week.length, tint: "from-course-blue/20" },
+          { label: "Upcoming", value: groups.upcoming.length, tint: "from-course-teal/20" },
+          { label: "Courses", value: courses.length, tint: "from-course-mustard/25" },
+        ].map((stat, index) => (
+          <div
+            key={stat.label}
+            className={cn(
+              "inset-tile tile-lift rise-in bg-gradient-to-br to-transparent p-4",
+              stat.tint,
+            )}
+            style={{ animationDelay: `${index * 60}ms` }}
+          >
+            <p className="font-display text-2xl font-semibold text-foreground">{stat.value}</p>
+            <p className="mt-0.5 text-xs uppercase tracking-[0.12em] text-foreground/50">
+              {stat.label}
+            </p>
+          </div>
+        ))}
+      </div>
+
       {attention > 0 && (
-        <Panel className="mb-5 border-accent/40">
+        <Panel className="mb-5 border border-accent/40" delay={40}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-lg font-semibold text-foreground">
+              <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+                <span className="soft-pulse size-2 rounded-full bg-accent" aria-hidden />
                 {attention} item{attention === 1 ? "" : "s"} need your attention
               </h2>
               <p className="text-sm text-foreground/60">
@@ -169,8 +194,13 @@ function DashboardPage() {
         </Panel>
       )}
 
-      <Panel className="mb-5">
-        <PanelHeader title="What should I work on?" aside="Ranked from your own deadlines" />
+      <Panel className="mb-5" delay={80}>
+        <PanelHeader
+          title="What should I work on?"
+          aside="Ranked from your own deadlines"
+          icon={<Sparkles className="size-4 text-course-berry" />}
+        />
+
         {focusPending ? (
           <LoadingRows rows={2} />
         ) : (focus?.items.length ?? 0) === 0 ? (
