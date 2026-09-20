@@ -14,6 +14,7 @@ import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { coursePalette } from "@/lib/course-colors";
 import { getFocusPlan, type FocusItem } from "@/lib/focus.functions";
 import { getOnboardingState } from "@/lib/onboarding.functions";
+import { sortByPriority } from "@/lib/item-priority";
 import { getPlannerData, type PlannerItem } from "@/lib/planner.functions";
 import { cn } from "@/lib/utils";
 
