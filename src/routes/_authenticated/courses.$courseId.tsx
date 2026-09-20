@@ -126,16 +126,41 @@ function CourseOverviewPage() {
         eyebrow={course?.course_code ?? plannerCourse?.courseCode ?? "Course"}
         title={title}
         action={
-          course ? (
-            <Button variant="soft" onClick={() => setEditing((open) => !open)}>
-              {editing ? "Close" : "Edit class"}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="brand"
+              onClick={() => {
+                setEditing(false);
+                setAdding((open) => !open);
+              }}
+            >
+              {adding ? "Close" : "+ Add item"}
             </Button>
-          ) : null
+            {course ? (
+              <Button
+                variant="soft"
+                onClick={() => {
+                  setAdding(false);
+                  setEditing((open) => !open);
+                }}
+              >
+                {editing ? "Close" : "Edit class"}
+              </Button>
+            ) : null}
+          </div>
         }
       />
 
       {course?.instructor ? (
         <p className="-mt-2 mb-4 text-sm text-foreground/60">{course.instructor}</p>
+      ) : null}
+
+      {adding ? (
+        <Panel className="mb-4 p-6">
+          <h2 className="mb-4 font-display text-lg font-semibold">Add to this class</h2>
+          {/* Only this class is offered, so the item always lands on the course you are viewing. */}
+          <ManualItemForm courses={[formCourse]} onDone={() => setAdding(false)} />
+        </Panel>
       ) : null}
 
       {editing && course ? (
@@ -144,6 +169,7 @@ function CourseOverviewPage() {
           <CourseForm editing={course} onDone={() => setEditing(false)} />
         </Panel>
       ) : null}
+
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         {[
