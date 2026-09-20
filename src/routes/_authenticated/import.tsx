@@ -19,6 +19,14 @@ import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorNote } from "@/components/app/StatusNote";
 import { Button } from "@/components/ui/app-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel-surface";
 import { analyzeCourseContentStructured } from "@/lib/course-analysis.functions";
 import type { ChunkTrace, CourseExtraction } from "@/lib/course-content";
@@ -94,6 +102,15 @@ type CourseImport = {
   examsSaved: number;
   needsAttention: number;
   error: ImportFailure | null;
+  /** The official course name the student confirmed; sent with the save so it wins. */
+  confirmedName: string | null;
+};
+
+/** A course-name question waiting on the student; resolved when they confirm. */
+type NameRequest = {
+  importId: string;
+  guess: string;
+  resolve: (name: string) => void;
 };
 
 const statusLabel: Record<ImportStatus, string> = {
@@ -164,7 +181,77 @@ function newEntry(file: File, kind: SourceKind): CourseImport {
     examsSaved: 0,
     needsAttention: 0,
     error: null,
+    confirmedName: null,
   };
+}
+
+/**
+ * Best guess at the course's real name. Canvas EPUB metadata titles are messy
+ * ("PHYS_0475_1060_2267_SEC..."), so prefer what the model read out of the
+ * content, then the file name without its extension, never the raw metadata title.
+ */
+function guessCourseName(extraction: CourseExtraction | null, fileName: string): string {
+  const fromModel = extraction?.course.course_name?.trim();
+  if (fromModel) return fromModel;
+  const base = fileName
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
+  return base || fileName;
+}
+
+/** Asks the student to confirm the course name before anything is saved. */
+function NameCourseDialog({
+  request,
+  onConfirm,
+}: {
+  request: NameRequest | null;
+  onConfirm: (request: NameRequest, name: string) => void;
+}) {
+  const [name, setName] = useState("");
+  // Reset the field each time a new file asks.
+  const importId = request?.importId ?? null;
+  const guess = request?.guess ?? "";
+  const [lastId, setLastId] = useState<string | null>(null);
+  if (importId !== lastId) {
+    setLastId(importId);
+    setName(guess);
+  }
+
+  return (
+    <Dialog open={request !== null} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Name this course</DialogTitle>
+          <DialogDescription>
+            This is the name that will show on your dashboard, calendar and assignments. Canvas
+            export titles are messy, so pick the clean one — e.g. “Intro to Psychology”.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="mt-2 space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!request) return;
+            const trimmed = name.trim();
+            if (trimmed.length === 0) return;
+            onConfirm(request, trimmed);
+          }}
+        >
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="e.g. Intro to Psychology"
+            maxLength={200}
+            autoFocus
+          />
+          <Button type="submit" className="w-full" disabled={name.trim().length === 0}>
+            Save name and continue
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -282,6 +369,7 @@ function newPastedEntry(text: string): CourseImport {
     examsSaved: 0,
     needsAttention: 0,
     error: null,
+    confirmedName: null,
   };
 }
 
@@ -304,12 +392,32 @@ function ImportSemesterPage() {
   const [imports, setImports] = useState<CourseImport[]>([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Course-name prompts queue up so concurrent imports ask one at a time.
+  const [nameQueue, setNameQueue] = useState<NameRequest[]>([]);
+
+  /** Pause a file's pipeline until the student confirms its course name. */
+  const askCourseName = useCallback(
+    (importId: string, guess: string) =>
+      new Promise<string>((resolve) => {
+        setNameQueue((queue) => [...queue, { importId, guess, resolve }]);
+      }),
+    [],
+  );
 
   const patch = useCallback((importId: string, next: Partial<CourseImport>) => {
     setImports((prev) =>
       prev.map((item) => (item.importId === importId ? { ...item, ...next } : item)),
     );
   }, []);
+
+  const confirmCourseName = useCallback(
+    (request: NameRequest, name: string) => {
+      patch(request.importId, { confirmedName: name });
+      request.resolve(name);
+      setNameQueue((queue) => queue.filter((item) => item.importId !== request.importId));
+    },
+    [patch],
+  );
 
   /** Parse in the browser, analyse on our own endpoint, then organize and save. */
   const runImport = useCallback(
@@ -388,6 +496,12 @@ function ImportSemesterPage() {
       // Organizing: group the extracted facts under their course and write them to the
       // student's own semester data. Provenance travels with every row.
       patch(entry.importId, { status: "organizing" });
+      // Before anything is written, ask the student for the course's official name —
+      // Canvas export titles are messy, so they get the final say.
+      const confirmedName = await askCourseName(
+        entry.importId,
+        guessCourseName(extraction, entry.fileName),
+      );
       try {
         const documentText = normalized.chunks
           .map((chunk) => chunk.text)
@@ -400,6 +514,7 @@ function ImportSemesterPage() {
             sourceName: entry.fileName,
             documentText,
             documentTitle: normalized.metadata.title,
+            courseNameOverride: confirmedName,
             extraction,
           },
         });
@@ -443,7 +558,7 @@ function ImportSemesterPage() {
         });
       }
     },
-    [analyze, patch, queryClient, readDocument, save],
+    [analyze, askCourseName, patch, queryClient, readDocument, save],
   );
 
   /** Run a set of files with bounded concurrency; each one succeeds or fails on its own. */
@@ -585,6 +700,8 @@ function ImportSemesterPage() {
         ))}
 
         {summary.complete > 0 && !working ? <FinishedSummary summary={summary} /> : null}
+
+        <NameCourseDialog request={nameQueue[0] ?? null} onConfirm={confirmCourseName} />
 
         {summary.complete > 0 ? <AttentionPanel /> : null}
       </div>

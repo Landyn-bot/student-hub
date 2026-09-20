@@ -53,6 +53,8 @@ const saveInputSchema = z.object({
   /** Concatenated document text, stored so the source survives any later edit or rejection. */
   documentText: z.string().max(400_000),
   documentTitle: z.string().nullable().optional(),
+  /** The name the student confirmed for the course; wins over anything extracted. */
+  courseNameOverride: z.string().trim().min(1).max(200).optional(),
   extraction: z.object({
     course: z.object({
       course_code: z.string().nullable(),
@@ -175,7 +177,10 @@ export const saveCourseImport = createServerFn({ method: "POST" })
         .limit(1)
         .maybeSingle();
 
+      // The student's confirmed name comes first; only when it was skipped do we fall
+      // back to whatever the model or the file called the course.
       const courseName =
+        data.courseNameOverride ??
         extraction.course.course_name ??
         data.documentTitle ??
         data.sourceName.replace(/\.epub$/i, "");
